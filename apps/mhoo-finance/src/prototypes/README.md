@@ -1,0 +1,7 @@
+# Reconciliation hero experiment
+
+Run `node scripts/preview-reconciliation-hero.mjs` from the Finance package and open `http://127.0.0.1:4332`. This is a local, synthetic-only React preview. It does not query, sync, or replace the installed Twenty App.
+
+The full-width graph compares five account lanes on one period and one illustrative $0–$100k scale. Solid strokes are ledger observations and dashed strokes are statement controls. The two range handles change all five plots and their illustrative statement-control differences. Selecting a lane highlights it. The preview contains only the graph and its navigator; no app shell, evidence panel, or invented transaction rows. The navigator is monthly; quarter aggregation is not represented as working functionality.
+
+`@visx/scale` and `@visx/shape` 4.0 provide fixed-coordinate SVG scales and paths. The automatic visx responsive components are intentionally absent because Twenty v2.37 Remote DOM does not expose reliable element measurement. This local browser preview proves composition and interaction only. Before any Workspace rollout, adapt the design to the governed front component, verify SVG rendering and pointer/keyboard behavior inside Twenty, then bind qualified account-period controls, exact currency, reconciliation receipts, and real source/transaction drilldown. Never treat these five synthetic accounts as financial findings.

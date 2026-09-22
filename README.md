@@ -1,6 +1,40 @@
-# Finance Investigation Workspace
+# Mhoo Finance
 
-This repository contains the narrow, synthetic-only MHO-229 prototype and the staging-only MHO-231 deployment contract. It does not connect to providers, contain client data, or authorize production deployment.
+This is the dedicated source repository for `@mhoo/finance`, the native Twenty
+Finance App. The product source lives in
+[`apps/mhoo-finance`](apps/mhoo-finance). It provides permission-aware accounts,
+transactions, statements, follow-ups and bounded evidence review.
+
+The original synthetic MHO-229 investigation prototype and the MHO-231 staging
+contract remain at the repository root as preserved legacy verification tools.
+They do not connect to providers, contain client data or authorize production
+deployment.
+
+## Repository layout
+
+| Path | Purpose |
+| --- | --- |
+| [`apps/mhoo-finance`](apps/mhoo-finance) | Canonical `@mhoo/finance` Twenty App source |
+| [`src`](src), [`public`](public), [`test`](test) | Preserved synthetic investigation prototype |
+| [`docs/staging-runbook.md`](docs/staging-runbook.md) | MHO-231 staging-only operational contract |
+| [`docs/finance-app-migration.md`](docs/finance-app-migration.md) | Source provenance, compatibility and remaining cutover gates |
+
+## Finance App checks
+
+Use Node.js 24 and Corepack. The App has its own Yarn lockfile:
+
+```sh
+npm run finance:install
+npm run finance:fixtures
+npm run finance:test
+npm run finance:lint
+npm run finance:typecheck
+```
+
+These checks build the App against the pinned public Twenty SDK packages. They
+do not install the App into a Workspace, read customer data or deploy anything.
+
+## Legacy synthetic investigation prototype
 
 ## What the slice proves
 
@@ -33,14 +67,19 @@ The read API independently re-opens every reported R2 object, hashes its exact b
 
 The investigator preview shows the content-addressed R2 object key, SHA-256 receipt, and exact JSON pointer for every coverage row and reconciliation finding. No successful preview values are hard-coded in the browser bundle.
 
-## Repository setup and status
+## Repository ownership and status
 
 The canonical repository is `mhoo-os/finance-investigation-workspace`; its default
-branch is `main`. Read [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md) before
-working here. This repository preserves the standalone synthetic prototype.
-Native `@mhoo/finance` belongs to `mhoo-os/mhoo-twenty-next` under accepted
-[ADR-0009](https://github.com/mhoo-os/mhoo/blob/92e43a7b9a59570c76729fb5f8850c66bda6ef78/ADR/0009-finance-six-year-forensic-review.md).
-Neither the project name nor a successful synthetic run authorizes real data.
+branch is `main`. Read [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md) and the
+[migration record](docs/finance-app-migration.md) before working here.
+
+Accepted [ADR-0015](https://github.com/mhoo-os/mhoo/blob/1120e155df9fe999d95a0d43153145c838769328/ADR/0015-portable-finance-clover-products.md)
+selects this repository as the Finance product destination. The reviewed native
+App was extracted from `mhoo-os/mhoo-twenty-next` at exact source commit
+`29436a21fc23f7f8119e80c4ea4014439dc31117`. The old source subtree remains in
+place temporarily for active-work preservation and consumer rollback; it is no
+longer the destination for new Finance product work after this migration lands.
+Neither repository ownership nor a successful synthetic run authorizes real data.
 
 Evidence snapshot, checked 2026-09-08 (recheck before acting):
 
@@ -57,11 +96,6 @@ Evidence snapshot, checked 2026-09-08 (recheck before acting):
   is separate from staging deployment and operational acceptance. The exact
   hostname, allowed principal, team domain, audience and separate Access execution
   authorization remain deployment gates; do not guess them.
-
-Accepted [ADR-0015](https://github.com/mhoo-os/mhoo/blob/1120e155df9fe999d95a0d43153145c838769328/ADR/0015-portable-finance-clover-products.md)
-selects this existing repository as the Finance product destination while preserving
-MHO-229/231 as separate synthetic scope. Native source stays in `mhoo-twenty-next`
-until reviewed extraction; this reconciliation adds no adapter or duplicate UI.
 
 Use Node.js 24, matching [CI](.github/workflows/ci.yml). Run `npm ci` first.
 [package.json](package.json) defines the tests and syntax checks above, plus
