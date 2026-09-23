@@ -25,13 +25,16 @@
     "benchmark:population": "node --experimental-strip-types scripts/generate-benchmark-population.mjs",
     "fixtures:validate-ingestion": "node --experimental-strip-types scripts/validate-ingestion-fixtures.mjs",
     "preview:question": "node scripts/preview-question-prototype.mjs",
-    "preview:reconciliation": "node scripts/preview-reconciliation-hero.mjs"
+    "preview:reconciliation": "node scripts/preview-reconciliation-hero.mjs",
+    "standalone:build": "vite build --config standalone-web/vite.config.ts",
+    "standalone:typecheck": "tsgo --noEmit -p standalone-web/tsconfig.json"
   },
   "devDependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@types/node": "^24.7.2",
     "@types/react": "^19.2.0",
+    "@types/react-dom": "19.2.3",
     "@typescript/native-preview": "^7.0.0-dev.20260116.1",
     "@visx/scale": "4.0.0",
     "@visx/shape": "4.0.0",
@@ -43,6 +46,7 @@
     "twenty-sdk": "2.37.0",
     "twenty-ui": "^1.0.0-alpha.1",
     "typescript": "^5.9.3",
+    "vite": "8.2.2",
     "vite-tsconfig-paths": "^4.2.1",
     "vitest": "^4.0.0"
   }

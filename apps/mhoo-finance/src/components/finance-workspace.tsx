@@ -168,14 +168,18 @@ const WorkspaceFinanceScreen = ({
   dataOverride,
   onTogglePreview,
   services,
+  standalone = false,
+  onConnectBank,
 }: {
   initialView: Exclude<FinanceView, 'sources'>;
   dataOverride?: WorkspaceFinanceData;
   onTogglePreview?: () => void;
   services?: {
     read: () => Promise<WorkspaceFinanceData>;
-    client: RestApiClient;
+    client?: RestApiClient;
   };
+  standalone?: boolean;
+  onConnectBank?: () => void;
 }) => {
   const [loadState, setLoadState] = useState<WorkspaceLoadState>(
     dataOverride
@@ -294,13 +298,16 @@ const WorkspaceFinanceScreen = ({
                 : 'Finance records could not be read. No demo data was substituted.'}
           </div>
           {loadState.kind !== 'loading' ? (
-            <button
-              type="button"
-              className="fw-button"
-              onClick={() => setRefresh((value) => value + 1)}
-            >
-              Retry
-            </button>
+            <>
+              <button
+                type="button"
+                className="fw-button"
+                onClick={() => setRefresh((value) => value + 1)}
+              >
+                Retry
+              </button>
+              {onTogglePreview ? <button type="button" className="fw-button" onClick={onTogglePreview}>Preview sample data</button> : null}
+            </>
           ) : null}
         </main>
       </Workspace>
@@ -504,7 +511,7 @@ const WorkspaceFinanceScreen = ({
     </div>
   );
 
-  const previewAction = onTogglePreview ? <FinanceButton aria-pressed={isSynthetic} onClick={onTogglePreview}>{isSynthetic ? 'Return to Workspace records' : 'Preview sample data'}</FinanceButton> : null;
+  const previewAction = onTogglePreview ? <FinanceButton aria-pressed={isSynthetic} onClick={onTogglePreview}>{isSynthetic ? standalone ? 'Return to connected records' : 'Return to Workspace records' : 'Preview sample data'}</FinanceButton> : null;
   const pageSpecificActions = selectedFollowUp ? <FinanceButton onClick={() => { setSelectedFollowUp(null); setFollowUpDetailSection('summary'); setFollowUpMutation('idle'); }}>← Back to Follow-ups</FinanceButton>
     : view === 'sources' ? <FinanceButton onClick={() => setView(initialView)}>← Back to {PAGE_TITLES[initialView]}</FinanceButton>
       : view === 'followups' ? null
@@ -514,7 +521,7 @@ const WorkspaceFinanceScreen = ({
   return (
     <Workspace data-view={view} aria-label={`${PAGE_TITLES[view]} Finance content`}>
       <main className="fw-main">
-        {view !== 'overview' || selectedFollowUp ? <FinancePageHeader title={selectedFollowUp ? 'Follow-up detail' : PAGE_TITLES[view]} detail={isSynthetic ? 'Hass Kitchen' : 'Workspace'} actions={pageHeaderActions} /> : null}
+        {view !== 'overview' || selectedFollowUp ? <FinancePageHeader title={selectedFollowUp ? 'Follow-up detail' : PAGE_TITLES[view]} detail={isSynthetic ? 'Hass Kitchen' : standalone ? 'Connected sources' : 'Workspace'} actions={pageHeaderActions} /> : null}
 
         {view === 'overview' && !selectedFollowUp ? <FinanceInsights data={data} isSynthetic={isSynthetic} onOpenFact={setSelectedFact} onOpenFollowUp={(task) => {setView('followups');setSelectedFollowUp(task);setFollowUpDetailSection('summary');}} /> : null}
 
@@ -607,7 +614,7 @@ const WorkspaceFinanceScreen = ({
               </table>
               {!data.accounts.length ? (
                 <div className="fw-empty">
-                  No financial accounts are available in this Workspace.
+                  {standalone ? 'No bank or card accounts are connected yet.' : 'No financial accounts are available in this Workspace.'}
                 </div>
               ) : null}
               <p className="fw-local">
@@ -690,7 +697,7 @@ const WorkspaceFinanceScreen = ({
                 <div className="fw-empty">
                   {data.statements.length
                     ? 'No statement source artifacts match this window and account.'
-                    : 'No statement source artifacts are available in this Workspace.'}
+                    : standalone ? 'No statement source artifacts are available yet.' : 'No statement source artifacts are available in this Workspace.'}
                 </div>
               ) : null}
               <p className="fw-local">
@@ -706,7 +713,7 @@ const WorkspaceFinanceScreen = ({
           <>
             <div className="fw-followup-toolbar">
               <p className="fw-page-note">Track missing evidence and the next action for each review.</p>
-              <button type="button" className="fw-button" aria-expanded={createFollowUpOpen} onClick={() => setCreateFollowUpOpen((open) => !open)}>New follow-up</button>
+              {!standalone ? <button type="button" className="fw-button" aria-expanded={createFollowUpOpen} onClick={() => setCreateFollowUpOpen((open) => !open)}>New follow-up</button> : null}
             </div>
             {createFollowUpOpen ? <FinanceFollowUpActions
               section="create"
@@ -754,7 +761,7 @@ const WorkspaceFinanceScreen = ({
             </div>
             {!data.followUps.length ? (
               <div className="fw-empty">
-                No Finance follow-up Tasks are visible to your role.
+                {standalone ? 'No Finance follow-ups are available yet.' : 'No Finance follow-up Tasks are visible to your role.'}
               </div>
             ) : null}
           </>
@@ -1122,6 +1129,17 @@ const WorkspaceFinanceScreen = ({
 
         {view === 'sources' && !selectedFollowUp ? (
           <>
+            {standalone ? (
+              <div className="fw-source-grid">
+                <article className="fw-source-card">
+                  <div className="fw-source-copy">
+                    <div className="fw-source-heading"><h2>Bank or card</h2><span className="fw-source-type">PLAID</span></div>
+                    <p>Connect an account to review recent activity. Transactions remain excluded from totals until reviewed.</p>
+                  </div>
+                  <div className="fw-source-action"><FinanceButton onClick={onConnectBank}>Connect bank or card</FinanceButton></div>
+                </article>
+              </div>
+            ) : <>
             <p className="fw-page-note">
               Choose a source type. These routes hand off to Twenty-owned
               Workspace surfaces; they do not claim a connection or import.
@@ -1152,6 +1170,7 @@ const WorkspaceFinanceScreen = ({
                   : 'Twenty could not open that source surface. No connection was changed.'}
               </div>
             ) : null}
+            </>}
           </>
         ) : null}
 
@@ -1344,14 +1363,18 @@ export const FinanceWorkspace = ({
   initialView = 'overview',
   dataSource = 'workspace',
   services,
+  standalone = false,
+  onConnectBank,
 }: {
   onExit?: () => void;
   initialView?: Exclude<FinanceView, 'sources'>;
   dataSource?: 'workspace' | 'synthetic';
   services?: {
     read: () => Promise<WorkspaceFinanceData>;
-    client: RestApiClient;
+    client?: RestApiClient;
   };
+  standalone?: boolean;
+  onConnectBank?: () => void;
 }) => {
   const [previewEnabled, setPreviewEnabled] = useState(false);
   const isSynthetic = dataSource === 'synthetic' || previewEnabled;
@@ -1366,6 +1389,8 @@ export const FinanceWorkspace = ({
       dataOverride={SYNTHETIC_WORKSPACE_FINANCE_DATA}
       initialView={initialView}
       onTogglePreview={onTogglePreview}
+      standalone={standalone}
+      onConnectBank={onConnectBank}
     />
   ) : (
     <WorkspaceFinanceScreen
@@ -1373,6 +1398,8 @@ export const FinanceWorkspace = ({
       initialView={initialView}
       onTogglePreview={onTogglePreview}
       services={services}
+      standalone={standalone}
+      onConnectBank={onConnectBank}
     />
   );
 };

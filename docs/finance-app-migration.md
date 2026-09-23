@@ -108,3 +108,44 @@ or explicitly retired by their owners before removal.
 - Delivery Room: new mission registration was attempted and returned
   `DELIVERY_ROOM_REQUEST_UNCONFIRMED`; this migration record is the retained
   pending checkpoint for later reconciliation.
+
+## Standalone Finance continuation checkpoint — 2026-09-23
+
+The owner requested a standalone Cloudflare Pages/Workers, D1 and R2 Finance
+app with the existing React Finance screen and a first Plaid bank/card
+connector. No Linear issue is assigned to this new result yet. This work starts
+from migration PR #4 head `ba8cf9854cf7654ef399dd54f5ebc6c72e93e9a7` on
+`codex/finance-standalone-plaid` in
+`/Users/mhoooo/.codex/worktrees/finance-standalone-plaid/finance-investigation-workspace`.
+The implementation-owning repository remains `mhoo-os/finance-investigation-workspace`.
+The coordinating checkout remains the `codex/finance-app-migration` head at that
+same source commit; PR #4 is open with successful CI on its own head.
+
+The original migration's source worktrees remain owned and dirty in
+`mhoo-twenty-next`: `codex/finance-approved-insights` for MHO-7 UI/Clover work
+and `codex/finance-chase-pdf-controls` for MHO-228 bank/card imports. Their
+Delivery Room missions remain in review/active status. No custody transfer was
+acknowledged, so neither worktree was removed or copied into this first slice.
+The unmerged local investigation-methods commit `7e3af2e` remains in review.
+Local `codex/finance-setup-docs` and `codex/mho231-reconcile` refs were removed
+after verifying their respective PRs #3 and #2 were merged; no remote branch
+or worktree was deleted.
+
+The first standalone slice and official Plaid source links are recorded in
+[`standalone/README.md`](../standalone/README.md) and
+[`docs/plaid-connector.md`](plaid-connector.md). Local checks on the candidate
+branch: immutable Yarn install, 310 Finance tests, Finance lint and native
+typecheck, 54 root tests, 100% line/99.09% branch/100% function coverage,
+syntax checks, legacy staging packaging dry run, standalone Vite build and
+typecheck, four focused Plaid tests, and local Pages Functions compilation.
+The local Pages API returned 503 without Access configuration as intended.
+Desktop visual inspection showed the reused React Accounts screen and explicit
+synthetic preview. These checks do not prove a live Plaid Item or deployment.
+
+Delivery Room mission registration for `finance-standalone-plaid-20260923`
+returned `MISSION_EDIT_SESSION_REQUIRED` on 2026-09-23. This is the pending
+registration update; do not create a duplicate job on retry. Remaining gates:
+reviewed Pages/D1/R2 and Access ownership, Plaid Sandbox account and secrets,
+OAuth and webhook support, bounded-sync recovery beyond five pages, the
+statement/follow-up standalone writer, live browser proof and owner approval
+before any provider or deployment action.

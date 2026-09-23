@@ -13,6 +13,8 @@
     "finance:test": "corepack yarn@4.13.0 --cwd apps/mhoo-finance test:unit",
     "finance:lint": "corepack yarn@4.13.0 --cwd apps/mhoo-finance lint",
     "finance:typecheck": "corepack yarn@4.13.0 --cwd apps/mhoo-finance typecheck",
+    "finance:standalone:typecheck": "corepack yarn@4.13.0 --cwd apps/mhoo-finance standalone:typecheck",
+    "finance:standalone:build": "corepack yarn@4.13.0 --cwd apps/mhoo-finance standalone:build",
     "start": "node --input-type=module --eval \"import('./src/local.js').then(async ({ startLocalWorkspace }) => { const { url } = await startLocalWorkspace(); console.log('Synthetic Finance Investigation Workspace: ' + url); })\"",
     "preview": "npm start"
   },
