@@ -1,0 +1,35 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  // Standalone Finance, following mhoo-shell/APP-CONTRACT.md. The root wrangler.jsonc is the
+  // separate legacy synthetic prototype and must not be confused with this app.
+  "name": "mhoo-finance",
+  "main": "worker/entry.js",
+  "compatibility_date": "2026-09-04",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "routes": [
+    { "pattern": "mhoo.dev/00/finance", "zone_name": "mhoo.dev" },
+    { "pattern": "mhoo.dev/00/finance/*", "zone_name": "mhoo.dev" }
+  ],
+  "assets": { "directory": "./dist", "binding": "ASSETS", "run_worker_first": true },
+  "d1_databases": [
+    // Create a NEW database (wrangler d1 create mhoo-finance) and put its id here.
+    // Never bind the MHO-231 synthetic D1.
+    { "binding": "DB", "database_name": "mhoo-finance", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  "r2_buckets": [
+    // A NEW private bucket for raw Plaid evidence. Never the MHO-231 synthetic bucket.
+    { "binding": "EVIDENCE", "bucket_name": "mhoo-finance-evidence" }
+  ],
+  "vars": {
+    // The Worker refuses to serve anything unless this is "staging" (see worker/index.js).
+    "DEPLOYMENT_ENV": "staging",
+    "ACCESS_TEAM_DOMAIN": "mhoo.cloudflareaccess.com",
+    // Shared "Mhoo /00 Shared Workspace" Access audience, used by Shell and every /00 app.
+    "ACCESS_AUD": "a7cd3a8f02250d37b9795c8ce3e198a1de6ce687b68946860389bf5786f5ae05",
+    "ALLOWED_EMAILS": "tanyawit@mhoooo.com",
+    "PLAID_ENV": "sandbox"
+    // Secrets (wrangler secret put): PLAID_CLIENT_ID, PLAID_SECRET, PLAID_TOKEN_KEY (32-byte hex).
+  }
+}

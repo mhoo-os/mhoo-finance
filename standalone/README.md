@@ -1,12 +1,25 @@
-# Standalone Finance first slice
+# Standalone Finance
+
+The standalone app is one Cloudflare Worker, `mhoo-finance`, served at
+`mhoo.dev/00/finance/`. It follows the Mhoo app contract (`mhoo-shell/APP-CONTRACT.md`):
+it runs on its own and installs into Shell through `/.well-known/mhoo-app.json`.
 
 The web app is built from the **existing** `FinanceWorkspace` React component.
 Its shell and Twenty data client are replaced by a small navigation wrapper and
-Pages Functions API. The current Accounts and Transactions screens read from
-the Worker; existing Statements and Follow-ups screens remain visible but have
-no standalone writer yet. The synthetic preview stays an explicit button.
+the Worker API. The Accounts and Transactions screens read from the Worker; the
+Statements and Follow-ups screens stay visible but have no standalone writer yet.
 
-## Local source checks
+## Layout
+
+| Path | Purpose |
+| --- | --- |
+| `worker/entry.js` | Worker entry (handlers only) |
+| `worker/app.js` | Contract layer: manifest, `/00/finance` routing, allow-list, static pages |
+| `worker/index.js` | Finance API: Plaid Link, exchange, bounded sync, read model, disconnect |
+| `migrations/` | D1 schema, applied with `wrangler d1 migrations apply` |
+| `dist/00/finance/` | Vite build output, served as Worker static assets |
+
+## Local checks
 
 From the repository root:
 
@@ -14,27 +27,25 @@ From the repository root:
 npm run finance:install
 npm run finance:standalone:typecheck
 npm run finance:standalone:build
-node --test standalone/test/*.test.js
+npm test                       # includes standalone/test
+npm run standalone:deploy:dry  # bundles the Worker without deploying
 ```
 
-The Pages build output is `standalone/dist`; Functions live in
-`standalone/functions`. A static file server can show the React layout, but
-the API requires the Pages Functions runtime with configured bindings. Static
-preview intentionally reports that the Finance API is unavailable.
+`npm run standalone:dev` builds the pages, applies migrations to a local D1 and
+starts `wrangler dev`. Without a Cloudflare Access token every page and API
+returns 401 by design; there is no local sign-in bypass.
 
-## Required bindings and secrets
+## Sign-in and configuration
 
-For an isolated, Access-protected **sandbox** Pages project, bind a new D1
-database as `DB` and a new private R2 bucket as `EVIDENCE`. Apply
-`schema.sql` only to that new D1 database. Configure `DEPLOYMENT_ENV=staging`,
-`ACCESS_TEAM_DOMAIN`, and `ACCESS_AUD` for the exact protected Pages site.
-Set `PLAID_ENV=sandbox`, `PLAID_CLIENT_ID`, `PLAID_SECRET`, and a randomly
-generated 32-byte hex `PLAID_TOKEN_KEY` as server-side configuration or secrets
-as appropriate. Never commit their values. Cloudflare Access must also guard
-the Pages assets, not only `/api/*`; the Function independently verifies the
-Access assertion for each API call.
+Sign-in comes from the shared "Mhoo /00 Shared Workspace" Access app that covers
+`mhoo.dev/00/*`. The Worker verifies that token itself, for pages and API alike,
+because requests forwarded by Shell skip the edge, and then requires the email to
+be in `ALLOWED_EMAILS`. Service tokens are not accepted yet.
 
-Do not bind the MHO-231 synthetic D1/R2 resources. Do not use live Plaid
-credentials or client data for a local preview. Provider scope and rollout
-remain separate owner decisions. See [Plaid source notes](../docs/plaid-connector.md)
-for the precise first-slice behavior and remaining gates.
+Before a first deploy, create a **new** D1 database and a **new** private R2
+bucket and put their names/id in `standalone/wrangler.jsonc`. Never bind the
+MHO-231 synthetic resources. Set the secrets with `wrangler secret put`:
+`PLAID_CLIENT_ID`, `PLAID_SECRET` and `PLAID_TOKEN_KEY` (32-byte hex). Keep
+`PLAID_ENV=sandbox` and `DEPLOYMENT_ENV=staging` until the owner approves live
+banks. Provider scope and rollout remain separate owner decisions; see
+[Plaid source notes](../docs/plaid-connector.md).

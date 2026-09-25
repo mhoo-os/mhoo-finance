@@ -68,7 +68,7 @@ test('Link exchange stores a protected Item and serves the existing Finance read
 
 function bindings() {
   const db = new DatabaseSync(':memory:');
-  db.exec(readFileSync(new URL('../schema.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0001_init.sql', import.meta.url), 'utf8'));
   db.prepare(`INSERT INTO plaid_items (item_id, owner_sub, encrypted_access_token, status, created_at)
     VALUES ('item-test', 'owner-test', 'encrypted', 'CONNECTED', '2026-09-23T00:00:00Z')`).run();
   const DB = {

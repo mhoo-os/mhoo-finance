@@ -13,10 +13,13 @@ type Item = {
   accounts: { account_id: string; name: string; mask: string | null; type: string }[];
 };
 
+// Everything is served under the app's base path, standalone and inside Shell alike.
+const BASE = '/00/finance';
+
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(path, { credentials: 'same-origin', ...options });
+  const response = await fetch(`${BASE}${path}`, { credentials: 'same-origin', ...options });
   if (!response.headers.get('content-type')?.includes('application/json')) {
-    throw new Error('Finance API is unavailable. Open the configured Pages app to connect accounts.');
+    throw new Error('Finance API is unavailable. Open mhoo.dev/00/finance to connect accounts.');
   }
   const result = await response.json();
   if (!response.ok) throw new Error(response.status === 401 ? 'Sign in through Finance Access, then retry.' : result.error ?? 'Finance request failed');

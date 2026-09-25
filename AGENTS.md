@@ -2,6 +2,11 @@
 
 ## Scope and source
 
+- The standalone app in `standalone/` follows the Mhoo app contract in
+  `mhoo-shell/APP-CONTRACT.md` (sibling checkout `../mhoo-shell`, or
+  github.com/mhoo-os/mhoo-shell). Read it before changing routing, sign-in,
+  the Shell manifest or bindings.
+
 - This repository owns the canonical native `@mhoo/finance` App under
   `apps/mhoo-finance`, the synthetic MHO-229 prototype, and the separately
   reviewed MHO-231 staging candidate. Start with [README.md](README.md),
