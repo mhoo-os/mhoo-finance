@@ -1,0 +1,9 @@
+name: finance-typesafe-smoke
+description: Live TypeSafe transport and receipt smoke test on synthetic code only. No coding agent, GitHub write or provider bank data.
+mutates_checkout: false
+returns: smoke
+nodes:
+  - id: smoke
+    script: typesafe-smoke
+    runtime: bun
+    timeout: 30000
