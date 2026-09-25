@@ -1,0 +1,9 @@
+{
+  "roomRevision": "9a4b2224bdc5e6d403400b55cefdd60760666b5d",
+  "inputs": {
+    "../../../.local/share/room/releases/9a4b222/cloud/jev-evaluation-review.mjs": "ba9223444cf119d6d71c9dd3882e61ca8072bea92018b96f88f5c08b6daba2a3",
+    "../../../.local/share/room/releases/9a4b222/cloud/jev-context-selection.mjs": "5b01d4194b3caecd848e8571e1ce9f17ee355d7f7f3a0189303410d6eeea2702",
+    "../../../.local/share/room/releases/9a4b222/cloud/jev-decision-gateway.mjs": "7ab7b2ab8484e64c1c8e769182342bc89ad8277befc376d4c32762404caa917d",
+    "../../../.local/share/room/releases/9a4b222/plugin/scripts/jev-worker-route-client.mjs": "50c5d2d92a34e440888014341884c6c6039513e7b8eacd0aa57c13c51efea58f"
+  }
+}
