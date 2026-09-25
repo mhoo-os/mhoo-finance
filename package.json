@@ -21,7 +21,7 @@
     "standalone:deploy:dry": "wrangler deploy --config standalone/wrangler.jsonc --dry-run --outdir dist/standalone"
   },
   "devDependencies": {
-    "@mhoo/shell": "github:mhoo-os/mhoo-shell#b4b85ed",
+    "@mhoo/shell": "file:vendor/mhoo-shell-2.0.0-b4b85ed.tgz",
     "wrangler": "4.129.0"
   }
 }
