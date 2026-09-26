@@ -149,3 +149,15 @@ reviewed Pages/D1/R2 and Access ownership, Plaid Sandbox account and secrets,
 OAuth and webhook support, bounded-sync recovery beyond five pages, the
 statement/follow-up standalone writer, live browser proof and owner approval
 before any provider or deployment action.
+
+## App contract checkpoint — 2026-09-25
+
+The standalone slice now follows the Mhoo app contract (`mhoo-shell/APP-CONTRACT.md`,
+mhoo-shell PR #16). Pages Functions were replaced by one Worker, `mhoo-finance`,
+with static assets at `mhoo.dev/00/finance/`. It verifies the shared `/00`
+Access token for pages and API alike, requires `ALLOWED_EMAILS`, and publishes
+`/.well-known/mhoo-app.json` for Shell. `schema.sql` became
+`standalone/migrations/0001_init.sql`; the API handler is unchanged. This
+supersedes the "Pages/D1/R2 and Access ownership" gate above: sign-in is the
+existing shared Access app, and the remaining setup is a new D1 database, a new
+private R2 bucket and the Plaid Sandbox secrets. The other gates stand.

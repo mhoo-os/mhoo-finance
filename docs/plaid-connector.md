@@ -24,10 +24,12 @@ Plaid's documentation and do not establish a live bank connection.
   `apps/mhoo-finance/src`. The standalone entry point is
   `apps/mhoo-finance/standalone-web`; it renders `FinanceWorkspace` with a
   Worker-backed read adapter.
-- Pages Functions in `standalone/functions` run the Worker API in the same
-  origin as the page. `standalone/worker` owns Plaid requests, Access identity,
-  encrypted tokens, bounded sync and evidence custody.
-- `standalone/schema.sql` defines a new D1 store. The MHO-231 synthetic D1 and
+- One Worker serves the page and its API from the same origin under
+  `mhoo.dev/00/finance`. `standalone/worker/app.js` applies the Mhoo app
+  contract (routing, shared Access, allow-list, Shell manifest);
+  `standalone/worker/index.js` owns Plaid requests, encrypted tokens, bounded
+  sync and evidence custody.
+- `standalone/migrations/0001_init.sql` defines a new D1 store. The MHO-231 synthetic D1 and
   R2 bindings are separate and must not be reused for client data.
 - R2 keeps the exact Plaid JSON response bytes under a SHA-256 key. D1 records
   the pointer and hash, with transaction revisions and an excluded current view.
@@ -43,9 +45,9 @@ cursor in one D1 batch; larger updates fail without moving the cursor and need
 a separately reviewed background recovery path. All Plaid rows start
 `UNCLASSIFIED` and excluded from totals. This is not statement completeness.
 
-Before a live connection, the owner must configure a new Pages project, a new
-D1 database and private R2 bucket, Cloudflare Access for the entire site and
-API, and the Plaid environment secrets. Verify the expected Cloudflare account,
+Before a live connection, the owner must configure a new D1 database and
+private R2 bucket, confirm the Worker's `ALLOWED_EMAILS`, and set the Plaid
+environment secrets. Sign-in already comes from the shared `mhoo.dev/00` Access app. Verify the expected Cloudflare account,
 Plaid account, domain and allowed people. Sandbox Link, OAuth return, webhook
 verification and delivery, reauthentication, full pagination recovery, source
 overlap, and the standalone statement/follow-up writes need focused proof.

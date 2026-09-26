@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "test": "node --test 'test/*.test.js'",
+    "test": "node --test 'test/*.test.js' 'standalone/test/*.test.js'",
     "coverage": "node --experimental-test-coverage --test --test-coverage-include='src/**/*.js' --test-coverage-include='public/**/*.js' --test-coverage-lines=95 --test-coverage-branches=95 --test-coverage-functions=95 'test/*.test.js'",
     "check": "node --check src/access.js && node --check src/fixture.js && node --check src/ingest.js && node --check src/local-bindings.js && node --check src/local-worker.js && node --check src/local.js && node --check src/worker.js && node --check public/app.js",
     "deploy:check": "wrangler deploy --env staging --dry-run --outdir dist/wrangler",
@@ -16,7 +16,12 @@
     "finance:standalone:typecheck": "corepack yarn@4.13.0 --cwd apps/mhoo-finance standalone:typecheck",
     "finance:standalone:build": "corepack yarn@4.13.0 --cwd apps/mhoo-finance standalone:build",
     "start": "node --input-type=module --eval \"import('./src/local.js').then(async ({ startLocalWorkspace }) => { const { url } = await startLocalWorkspace(); console.log('Synthetic Finance Investigation Workspace: ' + url); })\"",
-    "preview": "npm start"
+    "preview": "npm start",
+    "standalone:dev": "npm run finance:standalone:build && wrangler d1 migrations apply DB --local --config standalone/wrangler.jsonc && wrangler dev standalone/worker/dev.js --config standalone/wrangler.jsonc",
+    "standalone:deploy:dry": "wrangler deploy --config standalone/wrangler.jsonc --dry-run --outdir dist/standalone"
   },
-  "devDependencies": { "wrangler": "4.129.0" }
+  "devDependencies": {
+    "@mhoo/shell": "file:vendor/mhoo-shell-2.0.0-b4b85ed.tgz",
+    "wrangler": "4.129.0"
+  }
 }

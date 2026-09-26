@@ -12,6 +12,22 @@ test('Plaid outflow convention and token custody', async () => {
   assert.equal(amountMinor(12.34), '-1234');
   assert.equal(amountMinor(-12.34), '1234');
   assert.throws(() => amountMinor(1.234), /precision/);
+  // Exact at magnitudes where amount * 100 is no longer exact in floating point.
+  assert.equal(amountMinor(10000000000.29), '-1000000000029');
+  assert.equal(amountMinor(319099585067.29), '-31909958506729');
+  assert.equal(amountMinor(0.1), '-10');
+  assert.equal(amountMinor(0), '0');
+  assert.throws(() => amountMinor(90071992547409.92), /out of range/);
+  assert.throws(() => amountMinor(1e21), /out of range/);
+  // Past 15 significant digits JSON parsing may already have rounded the amount: refuse, don't guess.
+  assert.throws(() => amountMinor(70368744177664.01), /out of range/);
+  // These parse to a shorter string (…664.1, …409.9) that would otherwise pass as a different amount.
+  assert.throws(() => amountMinor(70368744177664.09), /out of range/);
+  assert.throws(() => amountMinor(-90071992547409.91), /out of range/);
+  assert.equal(amountMinor(0.05), '-5');
+  assert.equal(amountMinor(-0.05), '5');
+  assert.equal(amountMinor(-0), '0');
+  assert.equal(amountMinor(9999999999999.99), '-999999999999999');
   const encrypted = await sealToken('access-test', key);
   assert.doesNotMatch(encrypted, /access-test/);
   assert.equal(await openToken(encrypted, key), 'access-test');
@@ -68,7 +84,7 @@ test('Link exchange stores a protected Item and serves the existing Finance read
 
 function bindings() {
   const db = new DatabaseSync(':memory:');
-  db.exec(readFileSync(new URL('../schema.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0001_init.sql', import.meta.url), 'utf8'));
   db.prepare(`INSERT INTO plaid_items (item_id, owner_sub, encrypted_access_token, status, created_at)
     VALUES ('item-test', 'owner-test', 'encrypted', 'CONNECTED', '2026-09-23T00:00:00Z')`).run();
   const DB = {
