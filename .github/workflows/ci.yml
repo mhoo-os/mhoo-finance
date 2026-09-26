@@ -22,3 +22,9 @@ jobs:
       - run: npm run coverage
       - run: npm run check
       - run: npm run deploy:check
+      - run: corepack enable
+      - run: npm run finance:install
+      - run: npm run finance:fixtures
+      - run: npm run finance:test
+      - run: npm run finance:lint
+      - run: npm run finance:typecheck

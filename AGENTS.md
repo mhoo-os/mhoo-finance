@@ -1,13 +1,16 @@
-# Finance Investigation Workspace working instructions
+# Mhoo Finance repository working instructions
 
 ## Scope and source
 
-- This repository owns the synthetic MHO-229 prototype and the separately
+- This repository owns the canonical native `@mhoo/finance` App under
+  `apps/mhoo-finance`, the synthetic MHO-229 prototype, and the separately
   reviewed MHO-231 staging candidate. Start with [README.md](README.md),
-  [CLAUDE.md](CLAUDE.md), the linked issue, and its existing checkpoint/PR.
-- Native Finance implementation belongs to `mhoo-os/mhoo-twenty-next` under
-  the accepted ADR-0009 linked in README. Do not turn this prototype into a
-  second production Finance authority or import real client/provider data.
+  [CLAUDE.md](CLAUDE.md), [docs/finance-app-migration.md](docs/finance-app-migration.md),
+  the linked issue, and its existing checkpoint/PR.
+- Accepted ADR-0015 selects this repository as the Finance product destination.
+  The transitional copy in `mhoo-os/mhoo-twenty-next` is retained for consumer
+  rollback and active-work reconciliation. Do not import real client/provider
+  data or claim host cutover until its separate acceptance gates pass.
 - Verify origin, remote default branch, exact source head, worktrees, and dirty
   files before edits. Fetch/read remote source before declaring instructions
   absent. Use an isolated branch; preserve other workers' branches and receipts.
@@ -39,7 +42,8 @@
   and `npm run check` (JavaScript syntax). Run these before a PR as required by
   CLAUDE.md. Install pinned dependencies with `npm ci`; also run
   `npm run deploy:check` for staging packaging only (`--dry-run`). There is no
-  application build, lint, or browser-E2E script on this base.
+  separate `finance:*` scripts for the native App. Host browser E2E remains in
+  the Twenty distribution and is a separate integration gate.
 - `npm start` / `npm run preview` seeds disposable in-memory bindings and serves
   localhost. Do not use a production database/bucket. No deployment is authorized
   by these commands or by this setup work.
