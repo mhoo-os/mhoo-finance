@@ -123,7 +123,7 @@ export const appendProvenance = (
   ) {
     throw new Error('Invalid Finance provenance history');
   }
-  const provenance = validatedProvenance(current ?? null);
+  const provenance = validatedProvenance((current ?? null) as string | null);
   if (provenance.length >= 100) {
     throw new Error('Finance provenance history reached its write bound');
   }

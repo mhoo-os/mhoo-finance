@@ -1101,6 +1101,7 @@ __metadata:
     "@emotion/styled": "npm:^11.14.0"
     "@types/node": "npm:^24.7.2"
     "@types/react": "npm:^19.2.0"
+    "@types/react-dom": "npm:19.2.3"
     "@typescript/native-preview": "npm:^7.0.0-dev.20260116.1"
     "@visx/scale": "npm:4.0.0"
     "@visx/shape": "npm:4.0.0"
@@ -1112,6 +1113,7 @@ __metadata:
     twenty-sdk: "npm:2.37.0"
     twenty-ui: "npm:^1.0.0-alpha.1"
     typescript: "npm:^5.9.3"
+    vite: "npm:8.2.2"
     vite-tsconfig-paths: "npm:^4.2.1"
     vitest: "npm:^4.0.0"
   languageName: unknown
@@ -1519,6 +1521,15 @@ __metadata:
   version: 6.15.1
   resolution: "@types/qs@npm:6.15.1"
   checksum: 10c0/1dfdbcb4cf2a8f66d57f0b9a9fe6b1c7091cb816687b6698c1351eaf31f62e412cea9b7453a9637b570cd5fad8dced527e5a9e69b4fcc6e318daacd8b749f094
+  languageName: node
+  linkType: hard
+
+"@types/react-dom@npm:19.2.3":
+  version: 19.2.3
+  resolution: "@types/react-dom@npm:19.2.3"
+  peerDependencies:
+    "@types/react": ^19.2.0
+  checksum: 10c0/b486ebe0f4e2fb35e2e108df1d8fc0927ca5d6002d5771e8a739de11239fe62d0e207c50886185253c99eb9dedfeeb956ea7429e5ba17f6693c7acb4c02f8cd1
   languageName: node
   linkType: hard
 
@@ -4065,7 +4076,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^6.0.0 || ^7.0.0 || ^8.0.0":
+"vite@npm:8.2.2, vite@npm:^6.0.0 || ^7.0.0 || ^8.0.0":
   version: 8.2.2
   resolution: "vite@npm:8.2.2"
   dependencies:

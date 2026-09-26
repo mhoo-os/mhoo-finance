@@ -18,6 +18,7 @@ deployment.
 | [`src`](src), [`public`](public), [`test`](test) | Preserved synthetic investigation prototype |
 | [`docs/staging-runbook.md`](docs/staging-runbook.md) | MHO-231 staging-only operational contract |
 | [`docs/finance-app-migration.md`](docs/finance-app-migration.md) | Source provenance, compatibility and remaining cutover gates |
+| [`standalone`](standalone) | Standalone Pages Functions, D1/R2 and Plaid first slice built from the existing React Finance screen |
 
 ## Finance App checks
 
