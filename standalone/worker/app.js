@@ -26,11 +26,14 @@ export async function handleAppRequest(request, env, { verify = verifyAccessAsse
   if (url.pathname === '/.well-known/mhoo-app.json' && request.method === 'GET') {
     return Response.json(MANIFEST, { headers: { 'cache-control': 'public, max-age=300' } });
   }
-  if (url.pathname === BASE) return Response.redirect(`${url.origin}${BASE}/`, 302);
-  if (!url.pathname.startsWith(`${BASE}/`)) return new Response('Not found', { status: 404 });
+  if (url.pathname !== BASE && !url.pathname.startsWith(`${BASE}/`)) return new Response('Not found', { status: 404 });
   if (allowedEmails(env).length === 0) return accessMisconfigured();
 
   const guarded = (req, e) => verifyAllowed(req, e, verify);
+  if (url.pathname === BASE) {
+    try { await guarded(request, env); } catch { return accessDenied(); }
+    return Response.redirect(`${url.origin}${BASE}/`, 302);
+  }
 
   // API: hand the existing handler the path it has always served (/api/...).
   if (url.pathname.startsWith(`${BASE}/api/`)) {

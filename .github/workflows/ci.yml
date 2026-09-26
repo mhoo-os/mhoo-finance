@@ -28,3 +28,6 @@ jobs:
       - run: npm run finance:test
       - run: npm run finance:lint
       - run: npm run finance:typecheck
+      - run: npm run finance:standalone:typecheck
+      - run: npm run finance:standalone:build
+      - run: npx wrangler deploy --dry-run --config standalone/wrangler.jsonc --outdir dist/standalone-dry-run

@@ -17,7 +17,7 @@
     "finance:standalone:build": "corepack yarn@4.13.0 --cwd apps/mhoo-finance standalone:build",
     "start": "node --input-type=module --eval \"import('./src/local.js').then(async ({ startLocalWorkspace }) => { const { url } = await startLocalWorkspace(); console.log('Synthetic Finance Investigation Workspace: ' + url); })\"",
     "preview": "npm start",
-    "standalone:dev": "npm run finance:standalone:build && wrangler d1 migrations apply DB --local --config standalone/wrangler.jsonc && wrangler dev --config standalone/wrangler.jsonc",
+    "standalone:dev": "npm run finance:standalone:build && wrangler d1 migrations apply DB --local --config standalone/wrangler.jsonc && wrangler dev standalone/worker/dev.js --config standalone/wrangler.jsonc",
     "standalone:deploy:dry": "wrangler deploy --config standalone/wrangler.jsonc --dry-run --outdir dist/standalone"
   },
   "devDependencies": {

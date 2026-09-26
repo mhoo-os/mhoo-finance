@@ -12,6 +12,13 @@ test('Plaid outflow convention and token custody', async () => {
   assert.equal(amountMinor(12.34), '-1234');
   assert.equal(amountMinor(-12.34), '1234');
   assert.throws(() => amountMinor(1.234), /precision/);
+  // Exact at magnitudes where amount * 100 is no longer exact in floating point.
+  assert.equal(amountMinor(10000000000.29), '-1000000000029');
+  assert.equal(amountMinor(319099585067.29), '-31909958506729');
+  assert.equal(amountMinor(0.1), '-10');
+  assert.equal(amountMinor(0), '0');
+  assert.throws(() => amountMinor(90071992547409.92), /out of range/);
+  assert.throws(() => amountMinor(1e21), /out of range/);
   const encrypted = await sealToken('access-test', key);
   assert.doesNotMatch(encrypted, /access-test/);
   assert.equal(await openToken(encrypted, key), 'access-test');

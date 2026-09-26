@@ -18,7 +18,9 @@ test('publishes a manifest Shell accepts', async () => {
 });
 
 test('serves pages only under the base path and only to allowed people', async () => {
-  assert.equal((await get(BASE)).status, 302);
+  assert.equal((await get(BASE, { verify: async () => { throw new Error('no token'); } })).status, 401, 'the bare base route is signed-in too');
+  assert.equal((await get(BASE, as('stranger@example.com'))).status, 401);
+  assert.equal((await get(BASE, as('owner@example.com'))).status, 302);
   assert.equal((await get('/somewhere-else', as('owner@example.com'))).status, 404);
   assert.equal((await get(`${BASE}/`, as('owner@example.com'))).status, 200);
   assert.equal((await get(`${BASE}/`, as('stranger@example.com'))).status, 401);
