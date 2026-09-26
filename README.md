@@ -5,13 +5,13 @@ Finance App. The product source lives in
 [`apps/mhoo-finance`](apps/mhoo-finance). It provides permission-aware accounts,
 transactions, statements, follow-ups and bounded evidence review.
 
-> **Archive, not the product.** `apps/mhoo-finance` is the Finance App as it ran
-> inside the Twenty CRM fork, kept here as a source reference. It is not deployed
-> and needs a Twenty host to build. The product is the standalone Mhoo app in
-> `standalone/` (added on top of this, deployed at `mhoo.dev/00/finance`). Known
-> issues left unfixed here on purpose: the statement importer converts cents to
-> floating-point dollars and doesn't capture a statement's currency, and dashboard
-> totals round-trip cents through floating point.
+> **Two Finance apps live in this repo.** `apps/mhoo-finance` is the Finance App
+> installed in the live Twenty workspace (`app.mhoo.app`) and handles real data.
+> `standalone/` (added on top of this) is the separate standalone Mhoo app for
+> `mhoo.dev/00/finance`. Known issues in the Twenty App, being fixed before merge:
+> the statement importer converts cents to floating-point dollars and doesn't
+> capture a statement's currency, and dashboard totals round-trip cents through
+> floating point.
 
 The original synthetic MHO-229 investigation prototype and the MHO-231 staging
 contract remain at the repository root as preserved legacy verification tools.
