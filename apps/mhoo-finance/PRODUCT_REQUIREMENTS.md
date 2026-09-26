@@ -146,7 +146,7 @@ Changing period, account, snapshot or filters invalidates incompatible selection
 ## Portability direction — ACCEPTED, Twenty-backed first
 
 ADR-0015 is accepted and the Finance product source has been extracted to
-`mhoo-os/finance-investigation-workspace/apps/mhoo-finance` with exact provenance
+`mhoo-os/mhoo-finance/apps/mhoo-finance` with exact provenance
 recorded in `docs/finance-app-migration.md`. The transitional
 `mhoo-twenty-next` copy remains a host integration and rollback source until a
 separately reviewed consumer switch passes installed acceptance. Existing

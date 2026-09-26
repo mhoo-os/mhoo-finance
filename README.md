@@ -69,7 +69,7 @@ The investigator preview shows the content-addressed R2 object key, SHA-256 rece
 
 ## Repository ownership and status
 
-The canonical repository is `mhoo-os/finance-investigation-workspace`; its default
+The canonical repository is `mhoo-os/mhoo-finance`; its default
 branch is `main`. Read [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md) and the
 [migration record](docs/finance-app-migration.md) before working here.
 
@@ -83,13 +83,13 @@ Neither repository ownership nor a successful synthetic run authorizes real data
 
 Evidence snapshot, checked 2026-09-08 (recheck before acting):
 
-- [MHO-229](https://linear.app/mhoo/issue/MHO-229) is Done. [PR #1](https://github.com/mhoo-os/finance-investigation-workspace/pull/1)
+- [MHO-229](https://linear.app/mhoo/issue/MHO-229) is Done. [PR #1](https://github.com/mhoo-os/mhoo-finance/pull/1)
   merged as `9de7f22fb15afa2b4f69a0b405f2d377dd33dc4a`; its
-  [CI receipt](https://github.com/mhoo-os/finance-investigation-workspace/actions/runs/33765649939)
+  [CI receipt](https://github.com/mhoo-os/mhoo-finance/actions/runs/33765649939)
   and [preview source](public/index.html) describe the local synthetic slice.
-- [MHO-231](https://linear.app/mhoo/issue/MHO-231) is In Review. [PR #2](https://github.com/mhoo-os/finance-investigation-workspace/pull/2), head
+- [MHO-231](https://linear.app/mhoo/issue/MHO-231) is In Review. [PR #2](https://github.com/mhoo-os/mhoo-finance/pull/2), head
   `8fa8e3eafe0be600109d2fb76cb771dab785d91d`, contains separate staging work with a
-  [successful CI receipt](https://github.com/mhoo-os/finance-investigation-workspace/actions/runs/33940423375).
+  [successful CI receipt](https://github.com/mhoo-os/mhoo-finance/actions/runs/33940423375).
   This candidate integrates that staging source with the setup instructions from
   main at `a335d9f50d0aa65cbb3558dc66e328e18316a94f`. The receipt above is historical;
   use PR #2's current-head checks for reconciliation proof. Source merge readiness

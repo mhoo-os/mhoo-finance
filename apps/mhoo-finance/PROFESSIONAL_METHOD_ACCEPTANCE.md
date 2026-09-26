@@ -401,7 +401,7 @@ At the time of this historical handoff, implementation remained in
 `7c2797a58a9d3f13ab700bb1e5b8bf8c827543a0`. Instructions read through
 `AGENTS.md` → `CLAUDE.md` at that commit, plus delivery-flow. This file and
 `INVESTIGATION_UI.md` retain the acceptance/run ledger. No PR or push in this handoff.
-The product destination remains `finance-investigation-workspace`; migration is
+The product destination remains `mhoo-finance`; migration is
 not part of this increment.
 
 Accepted baseline receipts retained from the previous lead: 271 tests,

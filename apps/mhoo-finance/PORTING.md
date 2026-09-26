@@ -2,7 +2,7 @@
 
 Original Twenty integration target: `mhoo-os/mhoo-twenty-next` at
 `88a21f624f17ecce805fb7fd6f9d8dc3f7d3c8b6`. Canonical portable source after
-ADR-0015 extraction: `mhoo-os/finance-investigation-workspace/apps/mhoo-finance`.
+ADR-0015 extraction: `mhoo-os/mhoo-finance/apps/mhoo-finance`.
 
 Seed: `mhoo-os/mhoo-twenty` PR #45 at
 `6bef8da9004ea67607315422454a6aa52a65dfd3`.

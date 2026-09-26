@@ -2,7 +2,7 @@
 
 ## Decision and scope
 
-Accepted ADR-0015 selects `mhoo-os/finance-investigation-workspace` as the
+Accepted ADR-0015 selects `mhoo-os/mhoo-finance` as the
 dedicated Finance product repository. This migration extracts the native
 `@mhoo/finance` Twenty App while keeping the existing MHO-229 synthetic
 prototype and MHO-231 staging contract as separate, bounded legacy components.
@@ -19,7 +19,7 @@ the transitional source copy.
 | Source branch | local `codex/finance-approved-insights` |
 | Source commit | `29436a21fc23f7f8119e80c4ea4014439dc31117` |
 | Source path | `packages/twenty-apps/internal/mhoo-finance` |
-| Destination repository | `mhoo-os/finance-investigation-workspace` |
+| Destination repository | `mhoo-os/mhoo-finance` |
 | Destination path | `apps/mhoo-finance` |
 | Extraction method | Exact Git tree archive of the source path |
 | Package identity | `@mhoo/finance` version `0.1.0`, private, `UNLICENSED` |

@@ -15,7 +15,7 @@ explicit local test/preview source only. The App remains provider-credential-fre
 
 ## Current boundary
 
-- Canonical source: `mhoo-os/finance-investigation-workspace`, under
+- Canonical source: `mhoo-os/mhoo-finance`, under
   `apps/mhoo-finance`
 - Extracted source: `mhoo-os/mhoo-twenty-next` commit
   `29436a21fc23f7f8119e80c4ea4014439dc31117`; see the repository

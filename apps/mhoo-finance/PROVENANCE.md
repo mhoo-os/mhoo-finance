@@ -5,7 +5,7 @@
 - Original destination: `mhoo-os/mhoo-twenty-next`
 - Original path: `packages/twenty-apps/internal/mhoo-finance`
 - Canonical destination after ADR-0015 extraction:
-  `mhoo-os/finance-investigation-workspace/apps/mhoo-finance`
+  `mhoo-os/mhoo-finance/apps/mhoo-finance`
 - Exact extraction source: `29436a21fc23f7f8119e80c4ea4014439dc31117`
 - Destination base: `88a21f624f17ecce805fb7fd6f9d8dc3f7d3c8b6`
 - Phase A issue: MHO-146

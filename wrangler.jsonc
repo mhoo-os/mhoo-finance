@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "finance-investigation-workspace",
+  "name": "mhoo-finance",
   "main": "src/worker.js",
   "compatibility_date": "2026-09-04",
   "compatibility_flags": ["nodejs_compat"],
