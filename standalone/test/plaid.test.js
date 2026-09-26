@@ -19,6 +19,9 @@ test('Plaid outflow convention and token custody', async () => {
   assert.equal(amountMinor(0), '0');
   assert.throws(() => amountMinor(90071992547409.92), /out of range/);
   assert.throws(() => amountMinor(1e21), /out of range/);
+  // Past 15 significant digits JSON parsing may already have rounded the amount: refuse, don't guess.
+  assert.throws(() => amountMinor(70368744177664.01), /out of range/);
+  assert.equal(amountMinor(9999999999999.99), '-999999999999999');
   const encrypted = await sealToken('access-test', key);
   assert.doesNotMatch(encrypted, /access-test/);
   assert.equal(await openToken(encrypted, key), 'access-test');

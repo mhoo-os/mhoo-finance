@@ -50,8 +50,8 @@ export async function plaidRequest(env, path, body, fetcher = fetch) {
   return { data, raw };
 }
 
-// Plaid sends amounts as JSON numbers. String(amount) is the shortest decimal that round-trips,
-// i.e. the value Plaid wrote, so parse that text exactly instead of multiplying a float by 100.
+// Plaid sends amounts as JSON numbers. Up to 15 significant digits, String(amount) is exactly the
+// decimal Plaid wrote, so parse that text instead of multiplying a float by 100.
 const MAX_MINOR = BigInt(Number.MAX_SAFE_INTEGER);
 export function amountMinor(amount) {
   if (typeof amount !== 'number' || !Number.isFinite(amount)) throw new Error('Invalid Plaid amount');
@@ -59,6 +59,9 @@ export function amountMinor(amount) {
   if (!match) throw new Error('Plaid amount is out of range');
   const [, sign, whole, fraction = ''] = match;
   if (fraction.length > 2) throw new Error('Plaid amount has unsupported precision');
+  // A double keeps any decimal of up to 15 significant digits exactly; past that, JSON parsing may
+  // already have rounded the value Plaid sent, so refuse it instead of storing a different amount.
+  if ((whole.replace(/^0+/, '') + fraction).length > 15) throw new Error('Plaid amount is out of range');
   const cents = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
   if (cents > MAX_MINOR) throw new Error('Plaid amount is out of range');
   // Plaid transactions use positive outflow; Finance uses positive inflow.
