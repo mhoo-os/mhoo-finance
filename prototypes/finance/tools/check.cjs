@@ -171,7 +171,7 @@ async function run({ vw, vh, tag, reduce = false, real = false }) {
     await sleep(400);
     return page.evaluate(() => document.querySelector('.cue-answer .cue-sentence')?.textContent ?? '');
   };
-  for (const q of ['what is the combined exposure for February and March 2026?', 'trace 2026-02 and 2026-03', 'show exposure for 2026-02 and 2025-02', 'show exposure for 2025-02 and 2026-02', 'exposure in February 2026 vs February 2025']) {
+  for (const q of ['what is the combined exposure for February and March 2026?', 'trace 2026-02 and 2026-03', 'show exposure for 2026-02 and 2025-02', 'show exposure for 2025-02 and 2026-02', 'exposure in February 2026 vs February 2025', 'is there fraud in february 2026-2027?', 'exposure for 2026–2027']) {
     const out = await askQ(q);
     ok(`${tag} several months are not answered as one · ${q}`, /one month at a time/.test(out) && !/\$[1-9]/.test(out), out);
   }

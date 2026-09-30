@@ -107,8 +107,9 @@ function parsePeriod(t) {
   for (const m of t.matchAll(/(?<![\d$.,])((?:19|20|21)\d\d)[-/.](0?[1-9]|1[0-2])\b/g)) { add(months, Number(m[2]) - 1); add(years, m[1]); }
   for (const m of t.matchAll(/\b(0?[1-9]|1[0-2])[-/.]((?:19|20|21)\d\d)\b/g)) { add(months, Number(m[1]) - 1); add(years, m[2]); }
   MONTH_RX.forEach((_, i) => { if (monthNamed(t, i)) add(months, i); });
-  // A year after a hyphen counts only when a word precedes it ("feb-2025"), not a sign ("-2025").
-  for (const m of t.matchAll(/(?<![\d$.,−])(?<!(?:^|[^a-z])-)((?:19|20|21)\d\d)(?!\d|[.,]\d)/g)) add(years, m[1]);
+  // A year after a hyphen counts when a word or year precedes it ("feb-2025", "2026-2027"), not
+  // when the hyphen is a sign ("-2025").
+  for (const m of t.matchAll(/(?<![\d$.,−])(?<!(?:^|[^a-z\d])-)((?:19|20|21)\d\d)(?!\d|[.,]\d)/g)) add(years, m[1]);
   return { i: months[0] ?? -1, y: years[0] ?? null, multi: months.length > 1 || years.length > 1, months, years };
 }
 function findPeriod(t) {
