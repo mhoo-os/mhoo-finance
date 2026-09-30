@@ -149,7 +149,7 @@ async function run({ vw, vh, tag, reduce = false, real = false }) {
   await sleep(400);
   const scoped = await page.evaluate(() => document.querySelector('.cue-answer .cue-sentence')?.textContent ?? '');
   ok(`${tag} a named unknown month stays unknown`, /unknown, not \$0/.test(scoped) && !/net of/.test(scoped), scoped);
-  for (const q of ['where does $125.00 in February 2025 come from?', "where does June 2026's $364.00 come from?", 'what is exposure in 2027?']) {
+  for (const q of ['where does $125.00 in February 2025 come from?', "where does June 2026's $364.00 come from?", 'what is exposure in 2027?', 'what is the exposure in February 1999?', 'what is exposure in 02/1999?', 'trace 1999-02', 'what is exposure in 2126?']) {
     await page.fill('.cue-ask-input', q);
     await page.keyboard.press('Enter');
     await sleep(400);

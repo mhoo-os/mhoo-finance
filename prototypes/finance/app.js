@@ -93,11 +93,13 @@ function realCandidates() {
 const MONTH_RX = [/\bjan(uary)?\b/, /\bfeb(ruary)?\b/, /\bmar(ch)?\b/, /\bapr(il)?\b/, /\bmay\b/, /\bjune?\b/, /\bjuly?\b/, /\baug(ust)?\b/, /\bsep(t|tember)?\b/, /\boct(ober)?\b/, /\bnov(ember)?\b/, /\bdec(ember)?\b/];
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 // The month and year a question names, by name ("April 2026") or number ("2026-04", "04/2026").
+// Any year 1900–2199 is kept, even one far outside the evidence, so askedScope can refuse it
+// rather than fall back to the same month in another year. A figure like "$1999.00" is not a year.
 function parsePeriod(t) {
-  const ym = t.match(/\b(20\d\d)[-/.](0?[1-9]|1[0-2])\b/), my = t.match(/\b(0?[1-9]|1[0-2])[-/.](20\d\d)\b/);
+  const ym = t.match(/(?<![\d$.,])((?:19|20|21)\d\d)[-/.](0?[1-9]|1[0-2])\b/), my = t.match(/\b(0?[1-9]|1[0-2])[-/.]((?:19|20|21)\d\d)\b/);
   if (ym) return { i: Number(ym[2]) - 1, y: ym[1] };
   if (my) return { i: Number(my[1]) - 1, y: my[2] };
-  return { i: MONTH_RX.findIndex((rx) => rx.test(t)), y: t.match(/\b(20\d\d)\b/)?.[1] ?? null };
+  return { i: MONTH_RX.findIndex((rx) => rx.test(t)), y: t.match(/(?<![\d$.,\-−])((?:19|20|21)\d\d)(?!\d|[.,]\d)/)?.[1] ?? null };
 }
 function findPeriod(t) {
   const { i, y } = parsePeriod(t);
