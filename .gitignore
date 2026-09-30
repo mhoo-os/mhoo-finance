@@ -4,3 +4,8 @@ dist/
 node_modules/
 .dev.vars
 .env*
+
+# Prototype local-only files: previews, real-data loaders' output, screenshots
+prototypes/**/preview.html
+prototypes/**/*.local.*
+prototypes/**/.shots/
