@@ -91,21 +91,26 @@ function realCandidates() {
 
 // ---- Ask: answered locally from live state ------------------------------------------------------
 const MONTH_RX = [/\bjan(uary)?\b/, /\bfeb(ruary)?\b/, /\bmar(ch)?\b/, /\bapr(il)?\b/, /\bmay\b/, /\bjune?\b/, /\bjuly?\b/, /\baug(ust)?\b/, /\bsep(t|tember)?\b/, /\boct(ober)?\b/, /\bnov(ember)?\b/, /\bdec(ember)?\b/];
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+// The month and year a question names, by name ("April 2026") or number ("2026-04", "04/2026").
+function parsePeriod(t) {
+  const ym = t.match(/\b(20\d\d)[-/.](0?[1-9]|1[0-2])\b/), my = t.match(/\b(0?[1-9]|1[0-2])[-/.](20\d\d)\b/);
+  if (ym) return { i: Number(ym[2]) - 1, y: ym[1] };
+  if (my) return { i: Number(my[1]) - 1, y: my[2] };
+  return { i: MONTH_RX.findIndex((rx) => rx.test(t)), y: t.match(/\b(20\d\d)\b/)?.[1] ?? null };
+}
 function findPeriod(t) {
-  const i = MONTH_RX.findIndex((rx) => rx.test(t));
+  const { i, y } = parsePeriod(t);
   if (i < 0) return null;
-  const y = t.match(/\b(20\d\d)\b/)?.[1];
   const hits = V.data.months.filter((p) => Number(p.slice(5, 7)) === i + 1 && (!y || p.startsWith(y)));
   return hits.at(-1) ?? null;
 }
 // What the question names, so a named period that has no evidence here is never answered with
-// another period's figures. `outside` is the words asked about when nothing here covers them.
+// another period's figures. `outside` is the period asked about when nothing here covers it.
 function askedScope(t, p) {
-  const i = MONTH_RX.findIndex((rx) => rx.test(t));
-  const y = t.match(/\b(20\d\d)\b/)?.[1] ?? null;
-  const months = V.data.months;
-  const outside = (i >= 0 && !p) || (y && !months.some((m) => m.startsWith(y)));
-  const words = [i >= 0 ? t.match(MONTH_RX[i])[0] : null, y].filter(Boolean).join(' ').replace(/\b[a-z]/g, (c) => c.toUpperCase());
+  const { i, y } = parsePeriod(t);
+  const outside = (i >= 0 && !p) || (y && !V.data.months.some((m) => m.startsWith(y)));
+  const words = [i >= 0 ? MONTH_NAMES[i] : null, y].filter(Boolean).join(' ');
   return { inScope: (period) => (p ? period === p : y ? period.startsWith(y) : true), outside: outside ? words : null };
 }
 function evidenceSummary() {
@@ -113,20 +118,25 @@ function evidenceSummary() {
   const unknown = V.periods.filter((p) => !p.known).map((p) => monthShort(p.period));
   return `${count(V.openEx.length, 'open exception')} worth ${money(V.exposure)} (questions, not findings), ${V.counts.complete} of ${V.counts.cells} source-months complete, and ${unknown.join(' and ')} unknown.`;
 }
+function periodSummary(p, P) {
+  if (!P.known) return `${monthShort(p)} has no statements, so it's unknown, not $0.`;
+  const open = V.openEx.filter((e) => e.period === p);
+  return `${monthShort(p)} has ${count(P.facts.length, 'fact')}, ${P.included.length} included, net ${money(P.net)}; ${P.complete} of ${P.cells.length} sources complete; ${count(open.length, 'open exception')}${open.length ? ` worth ${money(open.reduce((n, e) => n + e.differenceCents, 0))} (questions, not findings)` : ''}.`;
+}
 function ask(text) {
   const t = text.toLowerCase();
   const prov = S.mode === 'real' ? 'From the local real-data file on this machine (unreconciled rows).' : 'From the synthetic fixture on this page. No AI call.';
   const p = findPeriod(t);
   const P = p ? V.byPeriod.get(p) : null;
-  if (/fraud|steal|stole|theft|embezzl|misconduct|profit|tax|cheat|launder|suspicious/.test(t)) {
-    return { kicker: 'Evidence', answer: `Finance doesn't draw fraud, tax or profit conclusions. Here is what the evidence shows: ${evidenceSummary()}`, action: S.mode === 'real' ? { label: 'Open coverage →', route: 'coverage' } : { label: 'Open exceptions →', route: 'exceptions' }, provenance: `${prov} Conclusions stay with a qualified professional.` };
-  }
   // A named month or year scopes every answer below: an unknown month stays unknown, a period with
   // no evidence here says so, and another period's figures are never offered in its place.
   const scope = askedScope(t, p);
   if (scope.outside) {
     const r = V.data.months;
-    return { kicker: 'Unknown', answer: `Nothing on this page covers ${scope.outside}: the evidence here runs ${monthShort(r[0])} to ${monthShort(r.at(-1))}. That's unknown, not $0.`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
+    return { kicker: 'Unknown', answer: `${/fraud|steal|stole|theft|embezzl|misconduct|profit|tax|cheat|launder|suspicious/.test(t) ? 'Finance doesn\'t draw fraud, tax or profit conclusions. ' : ''}Nothing on this page covers ${scope.outside}: the evidence here runs ${monthShort(r[0])} to ${monthShort(r.at(-1))}. That's unknown, not $0.`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
+  }
+  if (/fraud|steal|stole|theft|embezzl|misconduct|profit|tax|cheat|launder|suspicious/.test(t)) {
+    return { kicker: 'Evidence', answer: `Finance doesn't draw fraud, tax or profit conclusions. Here is what the evidence shows: ${P ? periodSummary(p, P) : evidenceSummary()}`, action: S.mode === 'real' ? { label: 'Open coverage →', route: 'coverage' } : { label: 'Open exceptions →', route: 'exceptions' }, provenance: `${prov} Conclusions stay with a qualified professional.` };
   }
   if (/custody|hash|sha|tamper|mismatch|hidden/.test(t)) {
     if (V.custody) return { kicker: 'Custody', answer: `${V.custody.artifact.fileName} no longer matches its receipt (simulated), so its ${count(V.custody.facts.length, 'fact')} are hidden from every total. Nothing is re-imported automatically.`, action: { label: 'Check receipt →', route: 'trace', pageAct: 'custody' }, provenance: prov };
@@ -164,7 +174,7 @@ function ask(text) {
   }
   if (/where.*come from|made of|trace|break ?down|rows/.test(t)) {
     const q = P ?? V.byPeriod.get(S.tracePeriod) ?? V.periods.find((x) => x.known);
-    return { kicker: 'Trace', answer: q.known ? `${monthShort(q.period)}'s ${money(q.net)} is ${count(q.included.length, S.mode === 'real' ? 'row' : 'included fact')}. Trace shows each one with its file and row pointer.` : `${monthShort(q.period)} has nothing to trace: no statements, unknown.`, action: { label: 'Open trace →', route: 'trace', pageAct: `trace-${q.period}` }, provenance: prov };
+    return { kicker: 'Trace', answer: q.known ? `${monthShort(q.period)}'s ${money(q.net)} is ${count(q.included.length, S.mode === 'real' ? 'row' : 'included fact')}. Trace shows each one with its file and row pointer.` : `${monthShort(q.period)} has nothing to trace: no statements, so it's unknown, not $0.`, action: { label: 'Open trace →', route: 'trace', pageAct: `trace-${q.period}` }, provenance: prov };
   }
   if (/clover|plaid|connect|toast/.test(t)) {
     return { kicker: 'Sources', answer: `Clover isn't connected: merchant consent (MHO-230) is still To do${S.mode === 'fixture' ? ', so the Clover rows here are synthetic fixture rows' : ''}. Plaid is Sandbox only (PR #5).`, action: { label: 'Open coverage →', route: 'coverage', pageAct: 'connectors' }, provenance: prov };
@@ -172,9 +182,9 @@ function ask(text) {
   if (/follow|approv|sent|email|reply|bookkeeper/.test(t)) {
     if (!V.followUps.length) return { kicker: 'Follow-ups', answer: 'There are no follow-ups on the local real data. Mhoo never sends them in any case.', action: { label: 'Open follow-ups →', route: 'followups' }, provenance: prov };
     const by = (s) => V.followUps.filter((f) => f.state === s).length;
-    return { kicker: 'Follow-ups', answer: `${by('TO_DO')} to do, ${by('WAITING_FOR_REPLY')} waiting for reply, ${by('READY_FOR_REVIEW')} ready for review, ${by('RESOLVED')} resolved. ${V.followUps.filter((f) => f.email === 'APPROVED_NOT_SENT').length} approved and not sent: nothing has left Mhoo.`, action: { label: 'Open follow-ups →', route: 'followups' }, provenance: prov };
+    return { kicker: 'Follow-ups', answer: `${p ? 'Across all months (follow-ups aren\'t filed by month): ' : ''}${by('TO_DO')} to do, ${by('WAITING_FOR_REPLY')} waiting for reply, ${by('READY_FOR_REVIEW')} ready for review, ${by('RESOLVED')} resolved. ${V.followUps.filter((f) => f.email === 'APPROVED_NOT_SENT').length} approved and not sent: nothing has left Mhoo.`, action: { label: 'Open follow-ups →', route: 'followups' }, provenance: prov };
   }
-  if (/duplicate|dedup|receipt|import/.test(t)) {
+  if (!P && /duplicate|dedup|receipt|import/.test(t)) {
     if (S.mode === 'real') return { kicker: 'Imports', answer: `The local store holds ${count(V.facts.length, 'row')} from the export ${(V.data.combined?.sha256 ?? '').slice(0, 8)}… (SHA-256 as recorded in the store; not re-hashed here). This page imports nothing.`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
     return { kicker: 'Imports', answer: `${V.data.artifacts.size} imports, ${V.data.duplicates} duplicate rows suppressed. Receipts are append-safe and retries idempotent, so totals don't change.`, action: { label: 'Check import →', route: 'coverage', pageAct: 'receipts' }, provenance: prov };
   }

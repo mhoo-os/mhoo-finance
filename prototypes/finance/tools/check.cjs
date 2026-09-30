@@ -156,12 +156,12 @@ async function run({ vw, vh, tag, reduce = false, real = false }) {
     const out = await page.evaluate(() => document.querySelector('.cue-answer .cue-sentence')?.textContent ?? '');
     ok(`${tag} a period outside the evidence stays unknown · ${q}`, /Nothing on this page covers/.test(out) && /unknown, not \$0/.test(out), out);
   }
-  for (const [q, rx] of [['what is exposure in April 2026?', /unknown, not \$0/], ['what is exposure in January 2026?', /no open exceptions.*isn't proof of \$0/], ['what is exposure in March 2026?', /exposure is \$1\.00/]]) {
+  for (const [q, rx] of [['what is exposure in April 2026?', /unknown, not \$0/], ['what is exposure in January 2026?', /no open exceptions.*isn't proof of \$0/], ['what is exposure in March 2026?', /exposure is \$1\.00/], ['trace 2026-04', /unknown, not \$0/], ['what was profit in April 2026?', /unknown, not \$0/], ['how many imports were there in April 2026?', /unknown, not \$0/]]) {
     await page.fill('.cue-ask-input', q);
     await page.keyboard.press('Enter');
     await sleep(400);
     const out = await page.evaluate(() => document.querySelector('.cue-answer .cue-sentence')?.textContent ?? '');
-    ok(`${tag} exposure is scoped to the month asked · ${q}`, rx.test(out) && !/\$126\.00/.test(out), out);
+    ok(`${tag} answers are scoped to the month asked · ${q}`, rx.test(out) && !/\$126\.00/.test(out), out);
   }
   await page.fill('.cue-ask-input', 'is this fraud?');
   await page.keyboard.press('Enter');
