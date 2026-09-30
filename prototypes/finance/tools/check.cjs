@@ -171,9 +171,13 @@ async function run({ vw, vh, tag, reduce = false, real = false }) {
     await sleep(400);
     return page.evaluate(() => document.querySelector('.cue-answer .cue-sentence')?.textContent ?? '');
   };
-  for (const q of ['what is the combined exposure for February and March 2026?', 'trace 2026-02 and 2026-03']) {
+  for (const q of ['what is the combined exposure for February and March 2026?', 'trace 2026-02 and 2026-03', 'show exposure for 2026-02 and 2025-02', 'show exposure for 2025-02 and 2026-02', 'exposure in February 2026 vs February 2025']) {
     const out = await askQ(q);
     ok(`${tag} several months are not answered as one · ${q}`, /one month at a time/.test(out) && !/\$[1-9]/.test(out), out);
+  }
+  for (const [q, rx] of [['may i see exposure?', /^Exposure is \$126\.00/], ['what is exposure in may?', /^May 2026 has no statements/], ['may i see the hashes?', /all 14 artifacts matching/], ["what is may's exposure?", /^May 2026 has no statements/]]) {
+    const out = await askQ(q);
+    ok(`${tag} "may" the verb is not the month · ${q}`, rx.test(out), out);
   }
   const cq = [['do the April 2026 hashes match?', /no stored files.*custody is unknown/, false], ['do the March 2026 hashes match?', /for Mar 2026 matching/, false],
     ['how many facts are hidden in March 2026?', /for Mar 2026 matching.*Separately.*Feb 2026.*flagged/, true], ['how many facts are hidden in January 2026?', /for Jan 2026 matching.*Separately/, true],

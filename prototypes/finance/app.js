@@ -92,24 +92,22 @@ function realCandidates() {
 // ---- Ask: answered locally from live state ------------------------------------------------------
 const MONTH_RX = [/\bjan(uary)?\b/, /\bfeb(ruary)?\b/, /\bmar(ch)?\b/, /\bapr(il)?\b/, /\bmay\b/, /\bjune?\b/, /\bjuly?\b/, /\baug(ust)?\b/, /\bsep(t|tember)?\b/, /\boct(ober)?\b/, /\bnov(ember)?\b/, /\bdec(ember)?\b/];
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-// The month and year a question names, by name ("April 2026") or number ("2026-04", "04/2026").
+// Every month and year a question names, by name ("April 2026") or number ("2026-04", "04/2026").
 // Any year 1900–2199 is kept, even one far outside the evidence, so askedScope can refuse it
-// rather than fall back to the same month in another year. A figure like "$1999.00" is not a year.
+// rather than fall back to the same month in another year; a figure like "$1999.00" is not a year.
+// "May" counts only where it reads as the month ("May 2026", "in May", "May's"), not the verb
+// ("may I see…"). `multi` is true when more than one month or year is named: those questions are
+// never answered as if they named only the first.
+const MAY_MONTH = /\bmay\s+(?:19|20|21)\d\d\b|\bmay['’]s\b|\b(?:in|of|for|and|to|through|from|or|since|until|about|during)\s+may\b|^may\b(?!\s+(?:i|we|you)\b)/;
+const monthNamed = (t, i) => (i === 4 ? MAY_MONTH.test(t) : MONTH_RX[i].test(t));
 function parsePeriod(t) {
-  const ym = t.match(/(?<![\d$.,])((?:19|20|21)\d\d)[-/.](0?[1-9]|1[0-2])\b/), my = t.match(/\b(0?[1-9]|1[0-2])[-/.]((?:19|20|21)\d\d)\b/);
-  if (ym) return { i: Number(ym[2]) - 1, y: ym[1] };
-  if (my) return { i: Number(my[1]) - 1, y: my[2] };
-  return { i: MONTH_RX.findIndex((rx) => rx.test(t)), y: t.match(/(?<![\d$.,\-−])((?:19|20|21)\d\d)(?!\d|[.,]\d)/)?.[1] ?? null };
-}
-// Every distinct month a question names, by name or number. "May" counts only where it reads as
-// the month ("May 2026", "in May", "and May"), not the verb ("may I see…").
-const MAY_MONTH = /\bmay\s+(?:19|20|21)\d\d\b|\b(?:in|of|for|and|to|through|from|or|since|until)\s+may\b|^may\b(?!\s+(?:i|we|you)\b)/;
-function monthsNamed(t) {
-  const out = new Set();
-  MONTH_RX.forEach((rx, i) => { if (i === 4 ? MAY_MONTH.test(t) : rx.test(t)) out.add(i); });
-  for (const m of t.matchAll(/(?<![\d$.,])(?:19|20|21)\d\d[-/.](0?[1-9]|1[0-2])\b/g)) out.add(Number(m[1]) - 1);
-  for (const m of t.matchAll(/\b(0?[1-9]|1[0-2])[-/.](?:19|20|21)\d\d\b/g)) out.add(Number(m[1]) - 1);
-  return [...out].sort((a, b) => a - b);
+  const months = [], years = [];
+  const add = (list, v) => { if (!list.includes(v)) list.push(v); };
+  for (const m of t.matchAll(/(?<![\d$.,])((?:19|20|21)\d\d)[-/.](0?[1-9]|1[0-2])\b/g)) { add(months, Number(m[2]) - 1); add(years, m[1]); }
+  for (const m of t.matchAll(/\b(0?[1-9]|1[0-2])[-/.]((?:19|20|21)\d\d)\b/g)) { add(months, Number(m[1]) - 1); add(years, m[2]); }
+  MONTH_RX.forEach((_, i) => { if (monthNamed(t, i)) add(months, i); });
+  for (const m of t.matchAll(/(?<![\d$.,\-−])((?:19|20|21)\d\d)(?!\d|[.,]\d)/g)) add(years, m[1]);
+  return { i: months[0] ?? -1, y: years[0] ?? null, multi: months.length > 1 || years.length > 1, months, years };
 }
 function findPeriod(t) {
   const { i, y } = parsePeriod(t);
@@ -143,11 +141,11 @@ function ask(text) {
   // A named month or year scopes every answer below: an unknown month stays unknown, a period with
   // no evidence here says so, and another period's figures are never offered in its place.
   const scope = askedScope(t, p);
-  // Two or more months: answer none of them rather than silently answering the first.
-  const named = monthsNamed(t);
-  if (named.length > 1) {
-    const names = named.map((i) => MONTH_NAMES[i]);
-    return { kicker: 'One month', answer: `That names ${names.slice(0, -1).join(', ')} and ${names.at(-1)}. Ask about one month at a time, or ask without a month for the whole page (every total here is by month, and an unknown month never adds up as $0).`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
+  // Two or more months or years: answer none of them rather than silently answering the first.
+  const named = parsePeriod(t);
+  if (named.multi) {
+    const names = [named.months.map((i) => MONTH_NAMES[i]).join(' and '), named.years.join(' and ')].filter(Boolean).join(' ');
+    return { kicker: 'One month', answer: `That names more than one period (${names}). Ask about one month at a time, or ask without a month for the whole page (every total here is by month, and an unknown month never adds up as $0).`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
   }
   if (scope.outside) {
     const r = V.data.months;
