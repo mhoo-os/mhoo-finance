@@ -101,6 +101,16 @@ function parsePeriod(t) {
   if (my) return { i: Number(my[1]) - 1, y: my[2] };
   return { i: MONTH_RX.findIndex((rx) => rx.test(t)), y: t.match(/(?<![\d$.,\-−])((?:19|20|21)\d\d)(?!\d|[.,]\d)/)?.[1] ?? null };
 }
+// Every distinct month a question names, by name or number. "May" counts only where it reads as
+// the month ("May 2026", "in May", "and May"), not the verb ("may I see…").
+const MAY_MONTH = /\bmay\s+(?:19|20|21)\d\d\b|\b(?:in|of|for|and|to|through|from|or|since|until)\s+may\b|^may\b(?!\s+(?:i|we|you)\b)/;
+function monthsNamed(t) {
+  const out = new Set();
+  MONTH_RX.forEach((rx, i) => { if (i === 4 ? MAY_MONTH.test(t) : rx.test(t)) out.add(i); });
+  for (const m of t.matchAll(/(?<![\d$.,])(?:19|20|21)\d\d[-/.](0?[1-9]|1[0-2])\b/g)) out.add(Number(m[1]) - 1);
+  for (const m of t.matchAll(/\b(0?[1-9]|1[0-2])[-/.](?:19|20|21)\d\d\b/g)) out.add(Number(m[1]) - 1);
+  return [...out].sort((a, b) => a - b);
+}
 function findPeriod(t) {
   const { i, y } = parsePeriod(t);
   if (i < 0) return null;
@@ -133,6 +143,12 @@ function ask(text) {
   // A named month or year scopes every answer below: an unknown month stays unknown, a period with
   // no evidence here says so, and another period's figures are never offered in its place.
   const scope = askedScope(t, p);
+  // Two or more months: answer none of them rather than silently answering the first.
+  const named = monthsNamed(t);
+  if (named.length > 1) {
+    const names = named.map((i) => MONTH_NAMES[i]);
+    return { kicker: 'One month', answer: `That names ${names.slice(0, -1).join(', ')} and ${names.at(-1)}. Ask about one month at a time, or ask without a month for the whole page (every total here is by month, and an unknown month never adds up as $0).`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
+  }
   if (scope.outside) {
     const r = V.data.months;
     return { kicker: 'Unknown', answer: `${/fraud|steal|stole|theft|embezzl|misconduct|profit|tax|cheat|launder|suspicious/.test(t) ? 'Finance doesn\'t draw fraud, tax or profit conclusions. ' : ''}Nothing on this page covers ${scope.outside}: the evidence here runs ${monthShort(r[0])} to ${monthShort(r.at(-1))}. That's unknown, not $0.`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
@@ -141,8 +157,15 @@ function ask(text) {
     return { kicker: 'Evidence', answer: `Finance doesn't draw fraud, tax or profit conclusions. Here is what the evidence shows: ${P ? periodSummary(p, P) : evidenceSummary()}`, action: S.mode === 'real' ? { label: 'Open coverage →', route: 'coverage' } : { label: 'Open exceptions →', route: 'exceptions' }, provenance: `${prov} Conclusions stay with a qualified professional.` };
   }
   if (/custody|hash|sha|tamper|mismatch|hidden/.test(t)) {
-    if (V.custody) return { kicker: 'Custody', answer: `${V.custody.artifact.fileName} no longer matches its receipt (simulated), so its ${count(V.custody.facts.length, 'fact')} are hidden from every total. Nothing is re-imported automatically.`, action: { label: 'Check receipt →', route: 'trace', pageAct: 'custody' }, provenance: prov };
-    return { kicker: 'Custody', answer: S.mode === 'real' ? 'Every row names the export it came from by SHA-256, as recorded in the local store (compare the MHO-259 inventory). This page re-hashes nothing.' : `The fixture reports all ${V.data.artifacts.size} artifacts matching their receipts. That is supplied metadata: this prototype re-hashes nothing. In the real app the read path re-hashes each file before anything is shown.`, action: { label: 'Open trace →', route: 'trace' }, provenance: prov };
+    // Scoped like every other answer: a named month hears only about its own files.
+    const alarm = V.custody && scope.inScope(V.custody.artifact.period ?? '') ? V.custody : null;
+    if (alarm) return { kicker: 'Custody', answer: `${alarm.artifact.fileName} no longer matches its receipt (simulated), so its ${count(alarm.facts.length, 'fact')} are hidden from every total. Nothing is re-imported automatically.`, action: { label: 'Check receipt →', route: 'trace', pageAct: 'custody' }, provenance: prov };
+    if (S.mode === 'real') return { kicker: 'Custody', answer: 'Every row names the export it came from by SHA-256, as recorded in the local store (compare the MHO-259 inventory). This page re-hashes nothing.', action: { label: 'Open trace →', route: 'trace' }, provenance: prov };
+    const elsewhere = V.custody ? ` Separately, ${V.custody.artifact.fileName} (${monthShort(V.custody.artifact.period)}) is flagged as not matching its receipt (simulated).` : '';
+    const arts = [...V.data.artifacts.values()].filter((a) => scope.inScope(a.period ?? '') && !V.hiddenArtifacts.has(a.artifactId));
+    const where = p ? monthShort(p) : null;
+    if (!arts.length) return { kicker: 'Custody', answer: `${where ?? 'This period'} has no stored files, so there is no receipt to check: custody is unknown, not proven.${elsewhere}`, action: { label: 'Open coverage →', route: 'coverage', ...(p ? { pageAct: `gap-${p}` } : {}) }, provenance: prov };
+    return { kicker: 'Custody', answer: `The fixture reports ${arts.length === V.data.artifacts.size ? 'all ' : ''}${count(arts.length, 'artifact')}${where ? ` for ${where}` : ''} matching ${arts.length === 1 ? 'its receipt' : 'their receipts'}. That is supplied metadata: this prototype re-hashes nothing. In the real app the read path re-hashes each file before anything is shown.${elsewhere}`, action: { label: 'Open trace →', route: 'trace', ...(p ? { pageAct: `trace-${p}` } : {}) }, provenance: prov };
   }
   if (/exposure|at risk|unproven/.test(t)) {
     if (S.mode === 'real') return { kicker: 'Exposure', answer: 'Exposure is unknown, not $0: no reconciliation has run on the local real data, so there are no exceptions to add up.', action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };

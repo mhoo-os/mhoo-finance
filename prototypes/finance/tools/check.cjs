@@ -163,6 +163,29 @@ async function run({ vw, vh, tag, reduce = false, real = false }) {
     const out = await page.evaluate(() => document.querySelector('.cue-answer .cue-sentence')?.textContent ?? '');
     ok(`${tag} answers are scoped to the month asked · ${q}`, rx.test(out) && !/\$126\.00/.test(out), out);
   }
+  // A question naming several months is not answered with the first one; custody is scoped to the month asked.
+  const askQ = async (q) => {
+    if (!(await page.evaluate(() => window.financeProto.island.getState().ask))) { await page.mouse.click(5, 5); await page.keyboard.press('Control+k'); await sleep(300); }
+    await page.fill('.cue-ask-input', q);
+    await page.keyboard.press('Enter');
+    await sleep(400);
+    return page.evaluate(() => document.querySelector('.cue-answer .cue-sentence')?.textContent ?? '');
+  };
+  for (const q of ['what is the combined exposure for February and March 2026?', 'trace 2026-02 and 2026-03']) {
+    const out = await askQ(q);
+    ok(`${tag} several months are not answered as one · ${q}`, /one month at a time/.test(out) && !/\$[1-9]/.test(out), out);
+  }
+  const cq = [['do the April 2026 hashes match?', /no stored files.*custody is unknown/, false], ['do the March 2026 hashes match?', /for Mar 2026 matching/, false],
+    ['how many facts are hidden in March 2026?', /for Mar 2026 matching.*Separately.*Feb 2026.*flagged/, true], ['how many facts are hidden in January 2026?', /for Jan 2026 matching.*Separately/, true],
+    ['do the April 2026 hashes match?', /no stored files.*Separately/, true], ['why is the bank file hidden in February 2026?', /no longer matches its receipt.*2 facts are hidden/, true]];
+  for (const [q, rx, alarm] of cq) {
+    if (await page.evaluate(() => window.financeProto.S.custody) !== alarm) { await page.evaluate((on) => window.financeProto.setCustody(on), alarm); await sleep(600); }
+    const out = await askQ(q);
+    ok(`${tag} custody answers are scoped to the month asked · alarm ${alarm ? 'on' : 'off'} · ${q}`, rx.test(out), out);
+  }
+  await page.evaluate(() => window.financeProto.setCustody(false));
+  await sleep(600);
+  if (!(await page.evaluate(() => window.financeProto.island.getState().ask))) { await page.mouse.click(5, 5); await page.keyboard.press('Control+k'); await sleep(300); }
   await page.fill('.cue-ask-input', 'is this fraud?');
   await page.keyboard.press('Enter');
   await sleep(400);
