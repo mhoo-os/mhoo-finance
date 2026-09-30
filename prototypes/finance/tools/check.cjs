@@ -134,6 +134,16 @@ async function run({ vw, vh, tag, reduce = false, real = false }) {
   await sleep(400);
   const why = await page.evaluate(() => document.querySelector('.cue-answer .cue-sentence')?.textContent ?? '');
   ok(`${tag} Ask explains exposure`, /\$125\.00 .* \+ \$1\.00/.test(why), why);
+  await page.fill('.cue-ask-input', 'trace -$364.00');
+  await page.keyboard.press('Enter');
+  await sleep(400);
+  const neg = await page.evaluate(() => document.querySelector('.cue-answer .cue-sentence')?.textContent ?? '');
+  ok(`${tag} Ask keeps the sign of an amount`, !/net of/.test(neg), neg);
+  await page.fill('.cue-ask-input', 'trace $364.00');
+  await page.keyboard.press('Enter');
+  await sleep(400);
+  const pos = await page.evaluate(() => document.querySelector('.cue-answer .cue-sentence')?.textContent ?? '');
+  ok(`${tag} Ask traces $364.00 to February`, /Feb.*net of/.test(pos), pos);
   await page.fill('.cue-ask-input', 'is this fraud?');
   await page.keyboard.press('Enter');
   await sleep(400);

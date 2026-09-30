@@ -120,10 +120,11 @@ function ask(text) {
     const parts = V.openEx.map((e) => `${money(e.differenceCents)} (${monthShort(e.period)} ${EX_KIND[e.exceptionKey] ?? 'exception'}, ${e.severity}, open)`);
     return { kicker: 'Exposure', answer: `Exposure is ${money(V.exposure)}: ${parts.join(' + ')}.`, action: { label: 'Open exceptions →', route: 'exceptions' }, provenance: `${prov} Sum of differenceCents over open exceptions.` };
   }
-  const amt = t.match(/\$\s?([\d,]+(?:\.\d{1,2})?)/) ?? t.match(/\b(\d[\d,]*\.\d{2})\b/);
+  // Keep the sign: "-$364.00", "$-364.00" and "−364.00" are not February's $364.00.
+  const amt = t.match(/(?<![\w$])([-−])?\$\s?([-−])?([\d,]+(?:\.\d{1,2})?)/) ?? t.match(/(?<![\w.])([-−])?()(\d[\d,]*\.\d{2})\b/);
   if (amt) {
-    const [d, c = '0'] = amt[1].replace(/,/g, '').split('.');
-    const cents = Number(d) * 100 + Number(c.padEnd(2, '0'));
+    const [d, c = '0'] = amt[3].replace(/,/g, '').split('.');
+    const cents = (amt[1] || amt[2] ? -1 : 1) * (Number(d) * 100 + Number(c.padEnd(2, '0')));
     const hit = V.periods.find((x) => x.known && x.net === cents);
     if (hit) return { kicker: 'Trace', answer: `${money(cents)} is ${monthShort(hit.period)}'s net of ${count(hit.included.length, 'included fact')}. ${count(hit.excluded.length, 'more fact')} ${hit.excluded.length === 1 ? 'is' : 'are'} excluded with a reason. Open Trace to watch it turn back into its rows.`, action: { label: 'Open trace →', route: 'trace', pageAct: `trace-${hit.period}` }, provenance: prov };
     const ex = V.data.exceptions.find((e) => e.differenceCents === cents || e.expectedCents === cents || e.observedCents === cents);
