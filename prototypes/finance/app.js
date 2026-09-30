@@ -95,10 +95,10 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 // Every month and year a question names, by name ("April 2026") or number ("2026-04", "04/2026").
 // Any year 1900–2199 is kept, even one far outside the evidence, so askedScope can refuse it
 // rather than fall back to the same month in another year; a figure like "$1999.00" is not a year.
-// "May" counts only where it reads as the month ("May 2026", "in May", "May's"), not the verb
-// ("may I see…"). `multi` is true when more than one month or year is named: those questions are
-// never answered as if they named only the first.
-const MAY_MONTH = /\bmay\s+(?:19|20|21)\d\d\b|\bmay['’]s\b|\b(?:in|of|for|and|to|through|from|or|since|until|about|during)\s+may\b|^may\b(?!\s+(?:i|we|you)\b)/;
+// "May" is the month unless it reads as the verb ("may I see…", "it may be stale"). `multi` is
+// true when more than one month or year is named: those questions are never answered as if they
+// named only the first.
+const MAY_MONTH = /\bmay\b(?!\s+(?:i|we|you|they|he|she|it|this|that|these|those|there|not|be|have|also|still|well|need|want|help)\b)/;
 const monthNamed = (t, i) => (i === 4 ? MAY_MONTH.test(t) : MONTH_RX[i].test(t));
 function parsePeriod(t) {
   const months = [], years = [];
