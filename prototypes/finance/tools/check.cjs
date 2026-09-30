@@ -144,6 +144,11 @@ async function run({ vw, vh, tag, reduce = false, real = false }) {
   await sleep(400);
   const pos = await page.evaluate(() => document.querySelector('.cue-answer .cue-sentence')?.textContent ?? '');
   ok(`${tag} Ask traces $364.00 to February`, /Feb.*net of/.test(pos), pos);
+  await page.fill('.cue-ask-input', 'what did we spend in April 2026, was it $364.00?');
+  await page.keyboard.press('Enter');
+  await sleep(400);
+  const scoped = await page.evaluate(() => document.querySelector('.cue-answer .cue-sentence')?.textContent ?? '');
+  ok(`${tag} a named unknown month stays unknown`, /unknown, not \$0/.test(scoped) && !/net of/.test(scoped), scoped);
   await page.fill('.cue-ask-input', 'is this fraud?');
   await page.keyboard.press('Enter');
   await sleep(400);
