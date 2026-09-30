@@ -103,7 +103,10 @@ export function mountTour({ dev, island, app }) {
       title: 'Draft a disposition',
       hand: 'Open the February exception and type a reviewer note. The March re-check lands while you type; press “Save note”.',
       async run(my) {
-        app.S.recheckArmed = true;
+        // Replay from the start: the March re-check hasn't landed yet, so it is news again.
+        clearTimeout(app.S.recheckTimer);
+        Object.assign(app.S, { recheck: false, recheckAt: null, recheckTimer: 0, recheckArmed: true });
+        app.update();
         app.navigate('exceptions', 'exception-pos-overlap-2026-02');
         await sleep(1100, my);
         const ta = dev.page.querySelector('#note-exception-pos-overlap-2026-02');
@@ -126,6 +129,7 @@ export function mountTour({ dev, island, app }) {
         const S = app.S;
         S.followUps = S.followUps.filter((f) => !f.id.startsWith('fu-new-'));
         S.draft = { subject: 'exception-bank-control-2026-03', question: '', email: 'DRAFT', saved: false };
+        S.drafts = {};
         delete S.explain.draft;
         app.navigate('followups', 'draft-mar');
         app.update();
@@ -199,7 +203,8 @@ export function mountTour({ dev, island, app }) {
       paint();
       return r;
     } catch (err) {
-      if (my === token) { running = -1; results.set(i, { ok: false, text: String(err?.message ?? err) }); paint(); }
+      if (my !== token) return null; // stopped: by the owner, the Stop button or another moment
+      running = -1; results.set(i, { ok: false, text: String(err?.message ?? err) }); paint();
       return { ok: false, text: String(err?.message ?? err) };
     }
   }
@@ -209,6 +214,11 @@ export function mountTour({ dev, island, app }) {
     if (b.classList.contains('ft-close')) { setOpen(false); app.button()?.focus(); return; }
     if (b.dataset.play) { const i = Number(b.dataset.play); if (running === i) stop(); else run(i); }
   });
+  // The owner takes over: any real pointer or key on the page (outside this panel) ends the moment,
+  // so the tour never keeps driving a page he has moved on from.
+  const takeOver = (e) => { if (running >= 0 && e.isTrusted && !panel.contains(e.target)) stop(); };
+  document.addEventListener('pointerdown', takeOver, true);
+  document.addEventListener('keydown', takeOver, true);
   dev.onPrefs((p) => { if (p.why && !panel.hidden) { panel.hidden = true; dev.root.dataset.tour = 'off'; app.button()?.setAttribute('aria-pressed', 'false'); stop(); dev.fit(); } });
 
   return { moments, run, stop, toggle: () => setOpen(panel.hidden), open: () => setOpen(true), close: () => setOpen(false), results };

@@ -9,7 +9,8 @@
 // (keep that outside the repo). Needs playwright-core (PLAYWRIGHT_CORE=/path/to/playwright-core).
 const path = require('path');
 const fs = require('fs');
-const { chromium } = require(process.env.PLAYWRIGHT_CORE || '/Users/mhoooo/projects/mhoo-os/.worktrees/particle-island-focus/node_modules/playwright-core');
+if (!process.env.PLAYWRIGHT_CORE) { console.error('Set PLAYWRIGHT_CORE=/path/to/playwright-core'); process.exit(2); }
+const { chromium } = require(process.env.PLAYWRIGHT_CORE);
 
 const port = process.argv[2] || '8842';
 const out = process.argv[3] || path.join(__dirname, '..', '.shots');
@@ -94,6 +95,29 @@ async function run({ vw, vh, tag, reduce = false, real = false }) {
   await page.evaluate(() => window.financeProto.setCustody(false));
   await sleep(600);
   ok(`${tag} alarm clears`, await page.evaluate(() => window.financeProto.island.getState().shape !== 'alert'));
+
+  // Regressions from review: the banner follows custody on every page; moment 4 replays;
+  // editing a requested follow-up returns it to Draft; a real click takes over from the tour.
+  const banner = await page.evaluate(async () => { const f = window.financeProto; f.navigate('trace'); f.setCustody(true); await new Promise((r) => setTimeout(r, 300)); const on = !!document.querySelector('.pd-page .alarm'); f.setCustody(false); await new Promise((r) => setTimeout(r, 300)); return { on, off: !!document.querySelector('.pd-page .alarm') }; });
+  ok(`${tag} custody banner follows the switch on Trace`, banner.on && !banner.off, JSON.stringify(banner));
+  const again = await page.evaluate(() => window.financeProto.tour.run(3));
+  ok(`${tag} moment 4 replays`, !!again?.ok, again?.text ?? '');
+  await page.evaluate(() => window.financeProto.navigate('followups'));
+  await sleep(600);
+  await page.focus('#fu-q');
+  await page.evaluate(() => { const t = document.querySelector('#fu-q'); t.setSelectionRange(t.value.length, t.value.length); });
+  await page.keyboard.type(' Thanks.');
+  const edited = await page.evaluate(() => { const f = window.financeProto; return { draft: f.S.draft.email, list: f.S.followUps.find((x) => x.id === 'fu-new-exception-bank-control-2026-03')?.email, btn: document.querySelector('[data-act="request-approval"]').disabled }; });
+  ok(`${tag} editing a requested follow-up returns it to Draft`, edited.draft === 'DRAFT' && edited.list === 'DRAFT' && edited.btn === false, JSON.stringify(edited));
+  await page.evaluate(() => document.querySelector('[data-act="request-approval"]').click()); // the open tour panel overlaps it
+  const re = await page.evaluate(() => { const f = window.financeProto; return { draft: f.S.draft.email, n: f.S.followUps.filter((x) => x.id.startsWith('fu-new-')).length, q: /Thanks\.$/.test(f.S.followUps.find((x) => x.id.startsWith('fu-new-'))?.question ?? '') }; });
+  ok(`${tag} re-requesting updates the same follow-up`, re.draft === 'AWAITING_APPROVAL' && re.n === 1 && re.q, JSON.stringify(re));
+  await page.evaluate(() => { window.financeProto.navigate('field'); window.__m4 = window.financeProto.tour.run(3); });
+  await sleep(1500);
+  await page.click('.cue-sections a:nth-child(3)');
+  await sleep(2500);
+  const took = await page.evaluate(async () => ({ route: window.financeProto.S.route, r: await window.__m4 }));
+  ok(`${tag} a real click takes over from the tour`, took.route === 'coverage' && took.r === null, JSON.stringify(took));
   await page.click('.pd-dock [data-ft="tour"]');
 
   // Ask refuses to send and answers from state.

@@ -98,7 +98,7 @@ export function fromReal(json) {
     sources: SOURCE_ORDER.map((k) => ({
       key: k,
       label: k === 'BANK' || k === 'CARD' ? accountLabel[k] ?? k : k === 'TOAST' ? 'Toast' : 'Clover',
-      note: k === 'CLOVER' ? 'Not connected · merchant consent MHO-230 pending' : k === 'TOAST' ? 'No Toast feed in the local store' : 'Posted rows from the verified export · unreconciled',
+      note: k === 'CLOVER' ? 'Not connected · merchant consent MHO-230 pending' : k === 'TOAST' ? 'No Toast feed in the local store' : 'Posted rows from the export · unreconciled',
     })),
     facts,
     artifacts,

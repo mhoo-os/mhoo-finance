@@ -32,6 +32,7 @@ const S = {
   notes: {}, choice: {}, explain: {},
   followUps: FOLLOW_UPS.map((f) => ({ ...f })),
   draft: { subject: 'exception-bank-control-2026-03', question: '', email: 'DRAFT', saved: false },
+  drafts: {}, // subject -> its draft, so switching subject never carries one draft's state into another
 };
 let V = null;
 const derive = () => (V = M.derive(S.data, { custody: S.custody, recheck: S.recheck, followUps: S.mode === 'fixture' ? S.followUps : [] }));
@@ -54,7 +55,7 @@ function candidates() {
   if (S.mode === 'real') return realCandidates();
   const out = [];
   if (V.custody) out.push({ id: 'custody', tier: 'P0', kicker: 'Custody', sentence: 'Bank · Feb 2026: the stored file doesn\'t match its receipt. Nothing from it is shown.',
-    because: 'the read path re-hashes every artifact · a mismatch hides the whole file, and it isn\'t re-imported automatically', action: { label: 'Check receipt →', route: 'trace', pageAct: 'custody' }, objectId: 'custody', ask: 'why is the bank file hidden' });
+    because: 'simulated · in the real app the read path re-hashes every artifact; a mismatch hides the whole file, and it isn\'t re-imported automatically', action: { label: 'Check receipt →', route: 'trace', pageAct: 'custody' }, objectId: 'custody', ask: 'why is the bank file hidden' });
   const open = (k) => V.openEx.some((e) => e.exceptionKey === k);
   if (open('exception-pos-overlap-2026-02')) out.push({ id: 'feb-overlap', tier: 'P1', kicker: 'Overlap', sentence: 'Feb 2026 · Toast and Clover both report the same $125.00 sale. Pick one source.',
     because: 'same event key in two POS feeds · exposure counts it twice · HIGH, open', action: { label: 'Open exception →', route: 'exceptions', pageAct: 'exception-pos-overlap-2026-02' }, objectId: 'exc-feb', ask: 'why is exposure $126.00' });
@@ -113,7 +114,7 @@ function ask(text) {
   }
   if (/custody|hash|sha|tamper|mismatch|hidden/.test(t)) {
     if (V.custody) return { kicker: 'Custody', answer: `${V.custody.artifact.fileName} no longer matches its receipt (simulated), so its ${count(V.custody.facts.length, 'fact')} are hidden from every total. Nothing is re-imported automatically.`, action: { label: 'Check receipt →', route: 'trace', pageAct: 'custody' }, provenance: prov };
-    return { kicker: 'Custody', answer: S.mode === 'real' ? 'Every row links to an export whose SHA-256 matches the Linear inventory (MHO-259).' : `All ${V.data.artifacts.size} artifacts match their receipts. The read path re-hashes each one before anything is shown.`, action: { label: 'Open trace →', route: 'trace' }, provenance: prov };
+    return { kicker: 'Custody', answer: S.mode === 'real' ? 'Every row names the export it came from by SHA-256, as recorded in the local store (compare the MHO-259 inventory). This page re-hashes nothing.' : `The fixture reports all ${V.data.artifacts.size} artifacts matching their receipts. That is supplied metadata: this prototype re-hashes nothing. In the real app the read path re-hashes each file before anything is shown.`, action: { label: 'Open trace →', route: 'trace' }, provenance: prov };
   }
   if (/exposure|at risk|unproven/.test(t)) {
     if (S.mode === 'real') return { kicker: 'Exposure', answer: 'Exposure is unknown, not $0: no reconciliation has run on the local real data, so there are no exceptions to add up.', action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
@@ -153,7 +154,7 @@ function ask(text) {
     return { kicker: 'Follow-ups', answer: `${by('TO_DO')} to do, ${by('WAITING_FOR_REPLY')} waiting for reply, ${by('READY_FOR_REVIEW')} ready for review, ${by('RESOLVED')} resolved. ${V.followUps.filter((f) => f.email === 'APPROVED_NOT_SENT').length} approved and not sent: nothing has left Mhoo.`, action: { label: 'Open follow-ups →', route: 'followups' }, provenance: prov };
   }
   if (/duplicate|dedup|receipt|import/.test(t)) {
-    if (S.mode === 'real') return { kicker: 'Imports', answer: `The local store holds ${count(V.facts.length, 'row')} from the verified export (${(V.data.combined?.sha256 ?? '').slice(0, 8)}…). This page imports nothing.`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
+    if (S.mode === 'real') return { kicker: 'Imports', answer: `The local store holds ${count(V.facts.length, 'row')} from the export ${(V.data.combined?.sha256 ?? '').slice(0, 8)}… (SHA-256 as recorded in the store; not re-hashed here). This page imports nothing.`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
     return { kicker: 'Imports', answer: `${V.data.artifacts.size} imports, ${V.data.duplicates} duplicate rows suppressed. Receipts are append-safe and retries idempotent, so totals don't change.`, action: { label: 'Check import →', route: 'coverage', pageAct: 'receipts' }, provenance: prov };
   }
   if (/stale/.test(t)) {
@@ -187,7 +188,13 @@ function render() {
 function update() {
   derive();
   if (page?.update) page.update(); else render();
+  syncBanner();
   island.refresh();
+}
+// The custody banner sits under every page's header; keep it in step on every transition.
+function syncBanner() {
+  const alarm = dev.page.querySelector('.alarm'); const html = custodyBanner();
+  if (alarm) { if (html) alarm.outerHTML = html; else alarm.remove(); } else if (html) dev.page.querySelector('.head')?.insertAdjacentHTML('afterend', html);
 }
 function navigate(route, pageAct) {
   if (!route || !PAGES[route]) return;
@@ -208,7 +215,7 @@ function applyPageAct(route, act) {
   }
   if (route === 'exceptions') S.openEx = act;
   if (route === 'coverage') { if (act.startsWith('coverage-') || act.startsWith('real-')) S.cell = act; if (act.startsWith('gap-')) S.cell = V.coverage.find((c) => c.period === act.slice(4))?.key ?? S.cell; }
-  if (route === 'followups' && act === 'draft-mar') { S.draft = { subject: 'exception-bank-control-2026-03', question: S.draft.question, email: S.draft.email, saved: S.draft.saved }; }
+  if (route === 'followups' && act === 'draft-mar') switchDraft('exception-bank-control-2026-03');
 }
 function scrollToAct(act) {
   const sel = { custody: '[data-island-object="custody"]', receipts: '#receipts', connectors: '#connectors', 'draft-mar': '#composer' }[act]
@@ -255,7 +262,7 @@ function FieldPage() {
   const real = S.mode === 'real';
   p.innerHTML = `<div class="app" data-route="field">
     ${head('Field', 'What the books can prove', real
-      ? 'Every dot is one posted row from the verified export. None is reconciled yet, so the field is half-settled: observed, not proven.'
+      ? 'Every dot is one posted row from the exported statements. None is reconciled yet, so the field is half-settled: observed, not proven.'
       : 'Every dot is one fact from a source file. <b>Ink</b> is proven and counted, <b>drift</b> is excluded with a reason, <b class="amb">amber</b> sits inside an open exception, and <b>stipple</b> is missing evidence.')}
     <button type="button" class="askline" data-act="ask"><span class="askline-orb" aria-hidden="true"></span><span class="askline-q">Ask about the books</span><span class="askline-k" aria-hidden="true">⌘K</span></button>
     <section class="headline" aria-label="Proof headline" data-region="headline"></section>
@@ -342,9 +349,6 @@ function FieldPage() {
       field.update();
       spark.set({ shape: sparkShape(), label: sparkLabel() });
       regions();
-      const alarm = p.querySelector('.alarm');
-      const html = custodyBanner();
-      if (alarm) alarm.outerHTML = html; else if (html) p.querySelector('.head').insertAdjacentHTML('afterend', html);
     },
   };
 }
@@ -511,7 +515,7 @@ function TracePage() {
         <dt>File</dt><dd>${esc(a?.fileName ?? f.artifactId)} <span class="muted">· revision ${f.revision} of ${f.revisionCount}${a?.freshness ? ` · ${esc(a.freshness.toLowerCase())}` : ''}</span></dd>
         ${hashRow}
         <dt>Row pointer</dt><dd class="mono">${esc(S.mode === 'real' ? `sha256:${(a?.contentHash ?? '').slice(0, 12)}…#record-${f.row}` : `${f.artifactId}#row-${f.row}`)}</dd>
-        <dt>Receipt</dt><dd>${r ? esc(`${r.status} · ${count(r.attempts, 'attempt')} · ${count(r.importedRows, 'row')} imported · ${r.deduplicatedRows} deduplicated`) : esc(S.mode === 'real' ? 'Verified export, SHA-256 matches the Linear inventory (MHO-259)' : '—')}</dd>
+        <dt>Receipt</dt><dd>${r ? esc(`${r.status} · ${count(r.attempts, 'attempt')} · ${count(r.importedRows, 'row')} imported · ${r.deduplicatedRows} deduplicated`) : esc(S.mode === 'real' ? 'Export SHA-256 as recorded in the local store (compare the MHO-259 inventory); not re-hashed here' : '—')}</dd>
         <dt>Raw values</dt><dd><pre class="raw">${esc(JSON.stringify(rawObj, null, 2))}</pre></dd>
       </dl>`;
   }
@@ -604,7 +608,7 @@ function CoveragePage() {
     p.querySelector('[data-region="conn"]').innerHTML = `<div class="card-top"><h2>Connectors</h2><span class="muted small">Read-only here</span></div>
       <ul class="conn"><li data-island-object="${real ? 'real-clover-c' : 'clover'}"><b>Clover</b>${tag('Not connected', 'amber')}<p>Merchant consent (MHO-230) is still To do. ${real ? 'No Clover rows exist locally.' : 'The Clover rows on this page are synthetic fixture rows.'}</p>${ownerBtn('clover', 'Connect Clover')}${explainHTML('conn')}</li>
       <li><b>Plaid</b>${tag('Sandbox only')}<p>Sandbox connector only (PR #5). No live bank link.</p></li>
-      <li><b>Local evidence store</b>${tag(real ? 'In use' : 'Available locally', real ? 'green' : '')}<p>${real ? `${count(V.facts.length, 'row')} from the verified export ${esc((V.data.combined?.sha256 ?? '').slice(0, 8))}… (MHO-259).` : 'On the owner\'s machine only, gitignored. Never published.'}</p></li></ul>`;
+      <li><b>Local evidence store</b>${tag(real ? 'In use' : 'Available locally', real ? 'green' : '')}<p>${real ? `${count(V.facts.length, 'row')} from the export ${esc((V.data.combined?.sha256 ?? '').slice(0, 8))}… (SHA-256 as recorded; not re-hashed here).` : 'On the owner\'s machine only, gitignored. Never published.'}</p></li></ul>`;
     const rec = [...V.data.receipts.values()];
     p.querySelector('[data-region="receipts"]').innerHTML = real
       ? `<div class="card-top"><h2>Imports</h2></div><p>${esc(count(V.data.documents?.registered ?? 0, 'statement'))} registered with SHA-256, ${V.data.documents?.extracted ?? 0} extracted. The page imports nothing.</p>${ownerBtn('extract', 'Extract statements')}${explainHTML('rec')}`
@@ -681,8 +685,6 @@ function ExceptionsPage() {
     update() {
       // Only the parts that don't hold a field the owner may be typing in.
       p.querySelectorAll('[data-recheck]').forEach((el) => { el.innerHTML = recheckHTML(); });
-      const alarm = p.querySelector('.alarm'); const html = custodyBanner();
-      if (alarm) alarm.outerHTML = html; else if (html) p.querySelector('.head').insertAdjacentHTML('afterend', html);
       p.querySelectorAll('.ex-card').forEach((el) => el.toggleAttribute('data-open', el.dataset.ex === S.openEx));
     },
     replay() { for (const x of bars) { x.b.setMerged(false); x.d.update(undefined, { animate: false }); } p.querySelectorAll('.bars').forEach((el) => (el.dataset.merged = 'false')); clearTimeout(mergeT); mergeT = setTimeout(() => { for (const x of bars) { x.b.setMerged(true); x.d.update(); } p.querySelectorAll('.bars').forEach((el) => (el.dataset.merged = 'true')); }, 700); },
@@ -770,8 +772,16 @@ function FollowUpsPage() {
         ${explainHTML('draft')}
       </form>`;
   }
+  function draftState() {
+    const d = S.draft, c = p.querySelector('#composer');
+    if (!c) return;
+    c.querySelector('.card-top').innerHTML = `<h2>New follow-up</h2>${tag(EMAIL_STATE[d.email], d.email === 'AWAITING_APPROVAL' ? 'blue' : '')}`;
+    c.querySelector('.ladder').outerHTML = ladder(d.email);
+    c.querySelector('[data-act="request-approval"]').disabled = d.email !== 'DRAFT';
+    c.querySelector('.saved').textContent = d.email === 'AWAITING_APPROVAL' ? 'Waiting for your approval. Approving would store “Approved, not sent”; sending stays outside Mhoo.' : 'Edited: back to Draft. Ask for approval again when it reads right.';
+  }
   list(); composer();
-  return { destroy: clearFx, update() { list(); }, composer, list };
+  return { destroy: clearFx, update() { list(); }, composer, list, draftState };
 }
 
 const PAGES = { field: FieldPage, trace: TracePage, coverage: CoveragePage, exceptions: ExceptionsPage, followups: FollowUpsPage };
@@ -805,7 +815,9 @@ dev.page.addEventListener('click', (e) => {
     S.draft.email = 'AWAITING_APPROVAL';
     const ex = exById(S.draft.subject);
     const id = `fu-new-${S.draft.subject}`;
-    if (!S.followUps.some((f) => f.id === id)) S.followUps.push({ id, question: q, subject: { kind: 'TRANSACTION', reference: S.draft.subject, label: `${monthShort(ex.period)} · ${EX_KIND[ex.exceptionKey]} ${money(ex.differenceCents)}` }, state: 'TO_DO', email: 'AWAITING_APPROVAL', owner: 'Owner', recipient: S.draft.subject === 'exception-bank-control-2026-03' ? 'Bank settlement desk (synthetic)' : 'Bookkeeper (synthetic)', nextAction: 'Approve it here, then send it yourself. Mhoo never sends.', updated: 'today' });
+    const existing = S.followUps.find((f) => f.id === id);
+    if (existing) Object.assign(existing, { question: q, email: 'AWAITING_APPROVAL', nextAction: 'Approve it here, then send it yourself. Mhoo never sends.' });
+    else S.followUps.push({ id, question: q, subject: { kind: 'TRANSACTION', reference: S.draft.subject, label: `${monthShort(ex.period)} · ${EX_KIND[ex.exceptionKey]} ${money(ex.differenceCents)}` }, state: 'TO_DO', email: 'AWAITING_APPROVAL', owner: 'Owner', recipient: S.draft.subject === 'exception-bank-control-2026-03' ? 'Bank settlement desk (synthetic)' : 'Bookkeeper (synthetic)', nextAction: 'Approve it here, then send it yourself. Mhoo never sends.', updated: 'today' });
     derive(); page.composer(); page.list(); island.refresh();
     return;
   }
@@ -820,10 +832,17 @@ dev.page.addEventListener('change', (e) => {
     const pv = t.closest('form').querySelector('[data-preview]');
     if (pv) pv.textContent = `If you recorded “keep ${t.value}”, exposure would fall from ${money(V.exposure)} to ${money(V.exposure - ex.differenceCents)} and the other row would stay in lineage. Nothing is recorded here.`;
   }
-  if (t.id === 'fu-subject') { S.draft.subject = t.value; S.draft.question = dev.page.querySelector('#fu-q').value; page.composer(); }
+  if (t.id === 'fu-subject') { S.draft.question = dev.page.querySelector('#fu-q')?.value ?? S.draft.question; switchDraft(t.value); page.composer(); }
 });
 dev.page.addEventListener('input', (e) => {
   const t = e.target;
+  if (t.id === 'fu-q' && S.draft.email === 'AWAITING_APPROVAL') {
+    // Editing a question after asking for approval takes it back to Draft; it must be asked again.
+    S.draft.email = 'DRAFT'; S.draft.question = t.value;
+    const f = S.followUps.find((x) => x.id === `fu-new-${S.draft.subject}`);
+    if (f) Object.assign(f, { email: 'DRAFT', nextAction: 'Edited after the request: ask for approval again.' });
+    derive(); page.draftState?.(); page.list?.(); island.refresh();
+  }
   if (t.matches?.('form[data-form="dispo"] textarea') && S.recheckArmed && S.mode === 'fixture') {
     S.recheckArmed = false;
     // Prototype stand-in for a real event: the scheduled March control re-check lands while
@@ -866,8 +885,14 @@ function setCustody(on) {
   extra.querySelector('[data-ft="custody"]').setAttribute('aria-pressed', String(S.custody));
   update();
 }
+function switchDraft(subject) {
+  if (S.draft.subject === subject) return;
+  S.drafts[S.draft.subject] = S.draft;
+  S.draft = S.drafts[subject] ?? { subject, question: '', email: 'DRAFT', saved: false };
+}
 function setMode(mode) {
   if (mode === 'real' && !S.real) return;
+  tour?.stop();
   S.mode = mode;
   S.data = mode === 'real' ? S.real : FIXTURE;
   if (mode === 'real') { S.custody = false; S.tracePeriod = S.real.months.at(-2) ?? S.real.months[0]; S.cell = S.real.coverage[0]?.key; }

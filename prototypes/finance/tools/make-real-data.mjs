@@ -3,11 +3,11 @@
 // machine only. Never commit or publish the output.
 //
 //   node prototypes/finance/tools/make-real-data.mjs [path/to/financial_sources.sqlite3]
-//   (default: $FINANCE_EVIDENCE_DB, else ~/Documents/Codex/2026-09-08/new-realtime-voice-chat-2/evidence/financial_sources.sqlite3)
+//   (or set FINANCE_EVIDENCE_DB; there is no default path)
 //
 // What it reads, read-only (node:sqlite, readOnly: true):
 // - finance_transactions: date, integer cents, status, category and merchant name.
-// - finance_exports: SHA-256, row counts and date range of the verified exports.
+// - finance_exports: SHA-256, row counts and date range of the exports.
 // - supplied_documents: how many statements are registered and how many were reviewed.
 // What it never emits: the description column (it carries Zelle and payroll payees, i.e.
 // staff and other people's names), transaction ids, full account labels or numbers, file
@@ -16,13 +16,13 @@
 // financial, gifts, services, housing and uncategorised rows render as their category only.
 import { DatabaseSync } from 'node:sqlite';
 import { writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const out = join(here, '..', 'real-data.local.json');
-const dbPath = process.argv[2] || process.env.FINANCE_EVIDENCE_DB || join(homedir(), 'Documents/Codex/2026-09-08/new-realtime-voice-chat-2/evidence/financial_sources.sqlite3');
+const dbPath = process.argv[2] || process.env.FINANCE_EVIDENCE_DB;
+if (!dbPath) { console.error('Usage: node make-real-data.mjs <path/to/financial_sources.sqlite3> (or set FINANCE_EVIDENCE_DB)'); process.exit(2); }
 
 // Categories where merchant_name is a business (a shop, a utility), safe to show locally.
 const MERCHANT_OK = new Set(['groceries', 'shopping', 'dining_drinks', 'transportation', 'bills_utilities', 'entertainment', 'health_wellness', 'travel', 'education', 'pets', 'GENERAL_SERVICES', 'GENERAL_MERCHANDISE']);
@@ -84,7 +84,7 @@ try {
     kind: 'local-real',
     note: 'Local only. Generated from the owner\'s evidence store; gitignored; never commit or publish.',
     generatedAt: new Date().toISOString(),
-    combined: combined ? { sha256: combined.sha256, rows: combined.rows, start: combined.start, end: combined.end, provenance: 'SHA-256 matches the Linear source inventory (MHO-259)' } : null,
+    combined: combined ? { sha256: combined.sha256, rows: combined.rows, start: combined.start, end: combined.end, provenance: 'SHA-256 as recorded in the local store; compare with the Linear source inventory (MHO-259)' } : null,
     exports,
     accounts: [...acct.values()].map(({ key, label, rows: n }) => ({ key, label, rows: n })),
     reconciliation: Object.fromEntries(recon.map((r) => [r.s, r.n])),
