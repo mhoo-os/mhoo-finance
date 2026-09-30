@@ -121,24 +121,28 @@ function ask(text) {
   if (/fraud|steal|stole|theft|embezzl|misconduct|profit|tax|cheat|launder|suspicious/.test(t)) {
     return { kicker: 'Evidence', answer: `Finance doesn't draw fraud, tax or profit conclusions. Here is what the evidence shows: ${evidenceSummary()}`, action: S.mode === 'real' ? { label: 'Open coverage →', route: 'coverage' } : { label: 'Open exceptions →', route: 'exceptions' }, provenance: `${prov} Conclusions stay with a qualified professional.` };
   }
+  // A named month or year scopes every answer below: an unknown month stays unknown, a period with
+  // no evidence here says so, and another period's figures are never offered in its place.
+  const scope = askedScope(t, p);
+  if (scope.outside) {
+    const r = V.data.months;
+    return { kicker: 'Unknown', answer: `Nothing on this page covers ${scope.outside}: the evidence here runs ${monthShort(r[0])} to ${monthShort(r.at(-1))}. That's unknown, not $0.`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
+  }
   if (/custody|hash|sha|tamper|mismatch|hidden/.test(t)) {
     if (V.custody) return { kicker: 'Custody', answer: `${V.custody.artifact.fileName} no longer matches its receipt (simulated), so its ${count(V.custody.facts.length, 'fact')} are hidden from every total. Nothing is re-imported automatically.`, action: { label: 'Check receipt →', route: 'trace', pageAct: 'custody' }, provenance: prov };
     return { kicker: 'Custody', answer: S.mode === 'real' ? 'Every row names the export it came from by SHA-256, as recorded in the local store (compare the MHO-259 inventory). This page re-hashes nothing.' : `The fixture reports all ${V.data.artifacts.size} artifacts matching their receipts. That is supplied metadata: this prototype re-hashes nothing. In the real app the read path re-hashes each file before anything is shown.`, action: { label: 'Open trace →', route: 'trace' }, provenance: prov };
   }
   if (/exposure|at risk|unproven/.test(t)) {
     if (S.mode === 'real') return { kicker: 'Exposure', answer: 'Exposure is unknown, not $0: no reconciliation has run on the local real data, so there are no exceptions to add up.', action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
+    if (P && !P.known) return { kicker: 'Exposure', answer: `${monthShort(p)} has no statements, so its exposure is unknown, not $0.`, action: { label: 'Open coverage →', route: 'coverage', pageAct: `gap-${p}` }, provenance: prov };
+    const scoped = V.openEx.filter((e) => scope.inScope(e.period));
+    if (P && !scoped.length) return { kicker: 'Exposure', answer: `${monthShort(p)} has no open exceptions${P.complete < P.cells.length ? `, but only ${P.complete} of ${P.cells.length} sources are complete, so that isn't proof of $0` : ''}.`, action: { label: 'Open trace →', route: 'trace', pageAct: `trace-${p}` }, provenance: prov };
+    if (P) return { kicker: 'Exposure', answer: `${monthShort(p)} exposure is ${money(scoped.reduce((n, e) => n + e.differenceCents, 0))}: ${scoped.map((e) => `${money(e.differenceCents)} (${EX_KIND[e.exceptionKey] ?? 'exception'}, ${e.severity}, open)`).join(' + ')}.`, action: { label: 'Open exception →', route: 'exceptions', pageAct: scoped[0].exceptionKey }, provenance: `${prov} Sum of differenceCents over that month's open exceptions.` };
     const parts = V.openEx.map((e) => `${money(e.differenceCents)} (${monthShort(e.period)} ${EX_KIND[e.exceptionKey] ?? 'exception'}, ${e.severity}, open)`);
     return { kicker: 'Exposure', answer: `Exposure is ${money(V.exposure)}: ${parts.join(' + ')}.`, action: { label: 'Open exceptions →', route: 'exceptions' }, provenance: `${prov} Sum of differenceCents over open exceptions.` };
   }
   // Keep the sign: "-$364.00", "$-364.00" and "−364.00" are not February's $364.00.
   const amt = t.match(/(?<![\w$])([-−])?\$\s?([-−])?([\d,]+(?:\.\d{1,2})?)/) ?? t.match(/(?<![\w.])([-−])?()(\d[\d,]*\.\d{2})\b/);
-  // A named month or year scopes the amount: an unknown month stays unknown, a period with no
-  // evidence here says so, and another period's matching figure is never offered in its place.
-  const scope = askedScope(t, p);
-  if (scope.outside) {
-    const r = V.data.months;
-    return { kicker: 'Unknown', answer: `Nothing on this page covers ${scope.outside}: the evidence here runs ${monthShort(r[0])} to ${monthShort(r.at(-1))}. That's unknown, not $0.`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
-  }
   if (amt && !(P && !P.known)) {
     const [d, c = '0'] = amt[3].replace(/,/g, '').split('.');
     const cents = (amt[1] || amt[2] ? -1 : 1) * (Number(d) * 100 + Number(c.padEnd(2, '0')));
@@ -175,10 +179,10 @@ function ask(text) {
     return { kicker: 'Imports', answer: `${V.data.artifacts.size} imports, ${V.data.duplicates} duplicate rows suppressed. Receipts are append-safe and retries idempotent, so totals don't change.`, action: { label: 'Check import →', route: 'coverage', pageAct: 'receipts' }, provenance: prov };
   }
   if (/stale/.test(t)) {
-    const st = V.coverage.filter((c) => c.status === 'STALE');
+    const st = V.coverage.filter((c) => c.status === 'STALE' && scope.inScope(c.period));
     return { kicker: 'Stale', answer: st.length ? `${st.map((c) => `${srcLabel(c.source)} · ${monthShort(c.period)}`).join(', ')}: the statement is older than the last import.` : 'Nothing is stale.', action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
   }
-  if (/coverage|complete|proven|missing|gap|unknown/.test(t)) {
+  if (!P && /coverage|complete|proven|missing|gap|unknown/.test(t)) {
     const c = V.counts;
     return { kicker: 'Coverage', answer: `${c.complete} of ${c.cells} source-months complete, ${c.partial} partial, ${c.stale} stale, ${c.noData} no data, ${c.noActivity} no activity${c.hidden ? `, ${c.hidden} hidden` : ''}. No data means unknown, not $0.`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
   }
