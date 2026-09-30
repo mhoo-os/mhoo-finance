@@ -98,6 +98,16 @@ function findPeriod(t) {
   const hits = V.data.months.filter((p) => Number(p.slice(5, 7)) === i + 1 && (!y || p.startsWith(y)));
   return hits.at(-1) ?? null;
 }
+// What the question names, so a named period that has no evidence here is never answered with
+// another period's figures. `outside` is the words asked about when nothing here covers them.
+function askedScope(t, p) {
+  const i = MONTH_RX.findIndex((rx) => rx.test(t));
+  const y = t.match(/\b(20\d\d)\b/)?.[1] ?? null;
+  const months = V.data.months;
+  const outside = (i >= 0 && !p) || (y && !months.some((m) => m.startsWith(y)));
+  const words = [i >= 0 ? t.match(MONTH_RX[i])[0] : null, y].filter(Boolean).join(' ').replace(/\b[a-z]/g, (c) => c.toUpperCase());
+  return { inScope: (period) => (p ? period === p : y ? period.startsWith(y) : true), outside: outside ? words : null };
+}
 function evidenceSummary() {
   if (S.mode === 'real') return `${count(V.facts.length, 'posted row')}, all unreconciled; ${V.data.documents?.registered ?? 0} statements registered, ${V.data.documents?.extracted ? `${V.data.documents.extracted} extracted` : 'none extracted'}; no reconciliation has run.`;
   const unknown = V.periods.filter((p) => !p.known).map((p) => monthShort(p.period));
@@ -122,14 +132,19 @@ function ask(text) {
   }
   // Keep the sign: "-$364.00", "$-364.00" and "−364.00" are not February's $364.00.
   const amt = t.match(/(?<![\w$])([-−])?\$\s?([-−])?([\d,]+(?:\.\d{1,2})?)/) ?? t.match(/(?<![\w.])([-−])?()(\d[\d,]*\.\d{2})\b/);
-  // A named month scopes the amount: an unknown month stays unknown, and another month's
-  // matching figure is never offered in its place.
+  // A named month or year scopes the amount: an unknown month stays unknown, a period with no
+  // evidence here says so, and another period's matching figure is never offered in its place.
+  const scope = askedScope(t, p);
+  if (scope.outside) {
+    const r = V.data.months;
+    return { kicker: 'Unknown', answer: `Nothing on this page covers ${scope.outside}: the evidence here runs ${monthShort(r[0])} to ${monthShort(r.at(-1))}. That's unknown, not $0.`, action: { label: 'Open coverage →', route: 'coverage' }, provenance: prov };
+  }
   if (amt && !(P && !P.known)) {
     const [d, c = '0'] = amt[3].replace(/,/g, '').split('.');
     const cents = (amt[1] || amt[2] ? -1 : 1) * (Number(d) * 100 + Number(c.padEnd(2, '0')));
-    const hit = V.periods.find((x) => x.known && x.net === cents && (!p || x.period === p));
+    const hit = V.periods.find((x) => x.known && x.net === cents && scope.inScope(x.period));
     if (hit) return { kicker: 'Trace', answer: `${money(cents)} is ${monthShort(hit.period)}'s net of ${count(hit.included.length, 'included fact')}. ${count(hit.excluded.length, 'more fact')} ${hit.excluded.length === 1 ? 'is' : 'are'} excluded with a reason. Open Trace to watch it turn back into its rows.`, action: { label: 'Open trace →', route: 'trace', pageAct: `trace-${hit.period}` }, provenance: prov };
-    const ex = V.data.exceptions.find((e) => (!p || e.period === p) && (e.differenceCents === cents || e.expectedCents === cents || e.observedCents === cents));
+    const ex = V.data.exceptions.find((e) => scope.inScope(e.period) && (e.differenceCents === cents || e.expectedCents === cents || e.observedCents === cents));
     if (ex) return { kicker: 'Exception', answer: `${money(cents)} belongs to ${monthShort(ex.period)} ${EX_KIND[ex.exceptionKey]}: expected ${money(ex.expectedCents)}, observed ${money(ex.observedCents)} (${ex.status.toLowerCase()}).`, action: { label: 'Open exception →', route: 'exceptions', pageAct: ex.exceptionKey }, provenance: prov };
   }
   if (P && /spend|spent|cost|expense|outflow|revenue|earn|made|sales|total|net|how much|income/.test(t)) {
