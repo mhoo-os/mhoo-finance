@@ -65,7 +65,8 @@ python3 -m http.server 8842 --bind 127.0.0.1 --directory prototypes/finance
 To run the browser checks, you need Playwright Core. Set `PLAYWRIGHT_CORE=/path/to/playwright-core`.
 
 ```sh
-node prototypes/finance/tools/check.cjs 8842 /tmp/finance-shots /tmp/finance-real-shots
+PLAYWRIGHT_CORE=/path/to/playwright-core node prototypes/finance/tools/check.cjs 8842 [shotsDir] [realShotsDir]
+# shotsDir defaults to the gitignored prototypes/finance/.shots; keep realShotsDir outside the repo
 ```
 
 The checks run at 1440×900, at 390×844, and at 1440×900 with reduced motion. They confirm
