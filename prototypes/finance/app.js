@@ -59,11 +59,10 @@ function candidates() {
   const open = (k) => V.openEx.some((e) => e.exceptionKey === k);
   if (open('exception-pos-overlap-2026-02')) out.push({ id: 'feb-overlap', tier: 'P1', kicker: 'Overlap', sentence: 'Feb 2026 · Toast and Clover both report the same $125.00 sale. Pick one source.',
     because: 'same event key in two POS feeds · exposure counts it twice · HIGH, open', action: { label: 'Open exception →', route: 'exceptions', pageAct: 'exception-pos-overlap-2026-02' }, objectId: 'exc-feb', ask: 'why is exposure $126.00' });
-  if (open('exception-bank-control-2026-03')) out.push(S.recheck
-    ? { id: 'mar-control', tier: 'P1', kicker: 'Control', sentence: `Mar 2026 · Re-checked at ${S.recheckAt}: Clover is still $1.00 over the bank control total.`,
-      because: `the March control procedure re-ran at ${S.recheckAt} (simulated) on the same two rows · expected $170.00, observed $171.00 · still no conclusion`, action: { label: 'Open exception →', route: 'exceptions', pageAct: 'exception-bank-control-2026-03' }, objectId: 'exc-mar' }
-    : { id: 'mar-control', tier: 'P1', kicker: 'Control', sentence: 'Mar 2026 · Clover revenue is $1.00 over the bank control total.',
-      because: 'expected $170.00, observed $171.00 · needs settlement detail before any conclusion', action: { label: 'Open exception →', route: 'exceptions', pageAct: 'exception-bank-control-2026-03' }, objectId: 'exc-mar' });
+  if (open('exception-bank-control-2026-03')) out.push({ id: 'mar-control', tier: 'P1', kicker: 'Control',
+    sentence: S.recheck ? `Mar 2026 · Re-checked at ${S.recheckAt}: Clover is still $1.00 over the bank control total.` : 'Mar 2026 · Clover revenue is $1.00 over the bank control total.',
+    because: S.recheck ? `the March control procedure re-ran at ${S.recheckAt} (simulated) on the same two rows · expected $170.00, observed $171.00 · still no conclusion` : 'expected $170.00, observed $171.00 · needs settlement detail before any conclusion',
+    action: { label: 'Open exception →', route: 'exceptions', pageAct: 'exception-bank-control-2026-03' }, objectId: 'exc-mar' });
   const gap = V.periods.find((p) => p.allNoData);
   if (gap) out.push({ id: `gap-${gap.period}`, tier: 'P2', kicker: 'Gap', sentence: `${monthLong(gap.period)} has no statements from any source. That's unknown, not $0.`,
     because: `coverage: Bank, Card, Toast and Clover are all No data for ${monthLong(gap.period).split(' ')[0]}`, action: { label: 'Open coverage →', route: 'coverage', pageAct: `gap-${gap.period}` }, objectId: `gap-${gap.period}`, ask: `what did we spend in ${monthLong(gap.period).split(' ')[0]}` });
@@ -82,7 +81,7 @@ function candidates() {
 }
 function realCandidates() {
   const d = V.data, docs = d.documents ?? { registered: 0, extracted: 0 };
-  const out = [{ id: 'real-unreconciled', tier: 'P1', kicker: 'Local real', sentence: `${count(V.facts.length, 'row')} · all unreconciled · ${docs.registered} statements registered, none extracted.`,
+  const out = [{ id: 'real-unreconciled', tier: 'P1', kicker: 'Local real', sentence: `${count(V.facts.length, 'row')} · all unreconciled · ${docs.registered} statements registered, ${docs.extracted ? `${docs.extracted} extracted` : 'none extracted'}.`,
     because: `reconciliation_status is unreconciled on every row · supplied_documents: ${docs.registered} registered, ${docs.extracted} extracted`, action: { label: 'Open coverage →', route: 'coverage' }, objectId: 'real-headline' }];
   out.push({ id: 'real-clover', tier: 'P2', kicker: 'Clover', sentence: 'Clover isn\'t connected. Merchant consent (MHO-230) is still To do.', because: 'no Clover feed in the local store · Plaid is Sandbox only (PR #5)', action: { label: 'Open coverage →', route: 'coverage' }, objectId: 'real-clover' });
   const gaps = V.coverage.filter((c) => (c.source === 'BANK' || c.source === 'CARD') && c.status === 'NO_DATA');
@@ -100,7 +99,7 @@ function findPeriod(t) {
   return hits.at(-1) ?? null;
 }
 function evidenceSummary() {
-  if (S.mode === 'real') return `${count(V.facts.length, 'posted row')}, all unreconciled; ${V.data.documents?.registered ?? 0} statements registered, none extracted; no reconciliation has run.`;
+  if (S.mode === 'real') return `${count(V.facts.length, 'posted row')}, all unreconciled; ${V.data.documents?.registered ?? 0} statements registered, ${V.data.documents?.extracted ? `${V.data.documents.extracted} extracted` : 'none extracted'}; no reconciliation has run.`;
   const unknown = V.periods.filter((p) => !p.known).map((p) => monthShort(p.period));
   return `${count(V.openEx.length, 'open exception')} worth ${money(V.exposure)} (questions, not findings), ${V.counts.complete} of ${V.counts.cells} source-months complete, and ${unknown.join(' and ')} unknown.`;
 }
