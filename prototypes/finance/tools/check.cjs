@@ -175,7 +175,7 @@ async function run({ vw, vh, tag, reduce = false, real = false }) {
     const out = await askQ(q);
     ok(`${tag} several months are not answered as one · ${q}`, /one month at a time/.test(out) && !/\$[1-9]/.test(out), out);
   }
-  for (const [q, rx] of [['may i see exposure?', /^Exposure is \$126\.00/], ['what is exposure in may?', /^May 2026 has no statements/], ['may i see the hashes?', /all 14 artifacts matching/], ["what is may's exposure?", /^May 2026 has no statements/], ['what is may exposure?', /^May 2026 has no statements/], ['was may profitable?', /doesn't draw.*May 2026 has no statements/], ['exposure, if it may be stale?', /^Exposure is \$126\.00/]]) {
+  for (const [q, rx] of [['may i see exposure?', /^Exposure is \$126\.00/], ['what is exposure in may?', /^May 2026 has no statements/], ['may i see the hashes?', /all 14 artifacts matching/], ["what is may's exposure?", /^May 2026 has no statements/], ['what is may exposure?', /^May 2026 has no statements/], ['was may profitable?', /doesn't draw.*May 2026 has no statements/], ['exposure, if it may be stale?', /^Exposure is \$126\.00/], ['did may have any suspicious transactions?', /doesn't draw.*May 2026 has no statements/], ['what exposure may i see, which may have changed?', /^Exposure is \$126\.00/]]) {
     const out = await askQ(q);
     ok(`${tag} "may" the verb is not the month · ${q}`, rx.test(out), out);
   }
