@@ -5,8 +5,8 @@
 // into the new value; when the canvas scrolls up out of view they scatter. Particles are
 // the data, never decoration: pass the real number, the real queue length, the real series.
 //
-//   const p = formParticles(canvas, { text: '$12,480', density: 1, color: '#172033' });
-//   p.set({ text: '$12,512' });          // lift off, re-form into the new value
+//   const p = formParticles(canvas, { text: 'r2', density: 1, color: '#172033' });
+//   p.set({ text: 'r3' });               // lift off, re-form into the new value
 //   p.set({ values: [3, 5, 2, 8], highlight: 3 });   // dot bars, the 4th in blue
 //   await p.whenSettled();
 //   p.destroy();

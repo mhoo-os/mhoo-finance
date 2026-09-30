@@ -376,6 +376,9 @@ export function mountIsland(root, opts = {}) {
     const had = document.activeElement && slot.contains(document.activeElement);
     const html = actionHTML(a);
     if (slot.innerHTML !== html) {
+      // Park focus on the orb first: removing a focused action fires a blur that re-renders
+      // mid-update and throws (Esc on a focused action).
+      if (had) orbBtn.focus({ preventScroll: true });
       slot.innerHTML = html;
       if (had) (slot.querySelector('.cue-action') ?? orbBtn).focus({ preventScroll: true }); // keep a keyboard user's place
     }
@@ -736,12 +739,18 @@ export function mountIsland(root, opts = {}) {
     const k = answerEl.querySelector('.cue-kicker');
     k.textContent = String(r.kicker ?? 'ASK').toUpperCase();
     k.dataset.tone = 'blue';
-    answerEl.querySelector('.cue-sentence').textContent = r.answer;
+    const sentenceEl = answerEl.querySelector('.cue-sentence');
+    sentenceEl.textContent = r.answer;
+    sentenceEl.scrollTop = 0;
     answerEl.querySelector('.cue-provenance').textContent = r.provenance ?? '';
     setAction(answerEl.querySelector('.cue-action-slot'), r.action ?? null);
     if (!reducedMotion()) answerEl.animate(TEXT_IN, { duration: 220, easing: 'cubic-bezier(.2,.8,.2,1)' });
     announce(`${r.kicker ?? 'Ask'}: ${r.answer}`, false, { asked: true });
     render();
+    // Longer than its three lines: make the answer a keyboard-scrollable region.
+    if (sentenceEl.scrollHeight > sentenceEl.clientHeight + 1) sentenceEl.tabIndex = 0; else sentenceEl.removeAttribute('tabindex');
+    sentenceEl.dataset.end = 'false';
+    sentenceEl.onscroll = () => { sentenceEl.dataset.end = String(sentenceEl.scrollTop + sentenceEl.clientHeight >= sentenceEl.scrollHeight - 1); };
   }
 
   // ---- events ----------------------------------------------------------------------
@@ -935,8 +944,23 @@ export function mountIsland(root, opts = {}) {
   refresh();
   log('line', `Mounted for ${appLabel}. It reads only this app's candidates and [data-island-object] ids.`);
 
+  /** Forget set-asides and anything in flight (a prototype's "Reset"), then re-read candidates. */
+  function reset() {
+    S.dismissed.clear(); S.notNow.clear();
+    session.set(`${keyBase}:aside`, {});
+    local.set(`${keyBase}:notnow`, {});
+    clearTimeout(S.ack.t); S.ack.until = 0; S.lastDismiss = null;
+    clearTimeout(S.leanT); S.leanT = 0; S.cue = null; S.held = [];
+    clearTimeout(S.recheckT); S.keptKey = null; S.line = null; // start over: the top candidate takes the line
+    if (S.ask.open) closeAsk(); // an answer about the old state would be stale
+    // Re-baseline like a first mount: what is true now is the starting point, and anything
+    // that becomes true after this (even with the same words as before the reset) is news.
+    S.seen.clear(); S.alerted.clear(); S.booted = false;
+    refresh();
+  }
+
   return {
-    refresh, ingest, setSections, destroy,
+    refresh, ingest, setSections, destroy, reset,
     getLog: () => S.log.slice(),
     onLog(fn) { S.logFns.add(fn); return () => S.logFns.delete(fn); },
     getState: () => ({

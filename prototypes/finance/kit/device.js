@@ -103,7 +103,7 @@ export function mountDevice(opts = {}) {
     if (!b) return;
     if (b.dataset.w) setPref('width', b.dataset.w);
     else if (b.dataset.pref) setPref(b.dataset.pref, !prefs[b.dataset.pref]);
-    else if (b.classList.contains('pd-why-close')) setPref('why', false);
+    else if (b.classList.contains('pd-why-close')) { setPref('why', false); root.querySelector('.pd-dock [data-pref="why"]')?.focus({ preventScroll: true }); }
   });
   const onOs = () => { if (!motionTouched) { prefs.reducedMotion = !!osReduce?.matches; apply(); for (const fn of fns) fn({ ...prefs }); } };
   osReduce?.addEventListener?.('change', onOs);

@@ -32,8 +32,11 @@ let raf = 0;
 function loop(now) {
   raf = 0;
   if (document.hidden) return; // resumed by visibilitychange
-  for (const orb of live) orb._tick(now);
-  if (live.size) raf = requestAnimationFrame(loop);
+  // Keep scheduling only while some orb still moves (a crossfade, a tint, or elapsed time).
+  // Under reduced motion or a freeze the loop stops after the repaint; setters kick() it again.
+  let more = false;
+  for (const orb of live) if (orb._tick(now)) more = true;
+  if (more) raf = requestAnimationFrame(loop);
 }
 function kick() {
   if (!raf && live.size && !document.hidden) raf = requestAnimationFrame(loop);
@@ -158,7 +161,7 @@ export function mountOrb(canvas, opts = {}) {
     canvas,
     size,
     _tick(now) {
-      if (destroyed) return;
+      if (destroyed) return false;
       // rAF timestamps can precede a performance.now() taken at mount; never step
       // time backwards (the engine's morph preset indexes shapes by time and breaks on t < 0).
       const dt = Math.max(0, Math.min((now - last) / 1000, 0.05));
@@ -178,6 +181,7 @@ export function mountOrb(canvas, opts = {}) {
         paint(now);
         dirty = false;
       }
+      return moving || !!fromPreset || !!tintMs;
     },
     _resetClock() {
       last = performance.now();
