@@ -1,0 +1,114 @@
+/* kit-tokens.css: Round 1 Mhoo tokens for the island kit.
+   Two families:
+   - Device tokens (--blue, --ink, --cue-*, --m-* …): the Mhoo product. Always light.
+   - Chrome tokens (--ch-*): prototype chrome outside the device (dock, Why panel,
+     page background). Light by default, dark under prefers-color-scheme or
+     [data-theme="dark"]; [data-theme="light"] forces light.
+   Phone values switch inside @container device (max-width: 560px), so the 1440/390
+   toggle works on any viewport. Never use viewport media queries for device layout. */
+
+:root {
+  color-scheme: light;
+
+  /* ---- device palette ---- */
+  --blue: #075cff; --blue-hover: #0047cc; --blue-soft: #9DBBFF; --tint: #EEF3FF; --tint-2: #f3f7ff;
+  --ink: #172033; --muted: #526174; --faint: #6b7886; --line: #e1e6ec; --surface: #f4f6f8; --paper: #ffffff; --dash: #c3cbd6;
+  --amber: #9A6200; --amber-bg: #FFF4DB; --amber-bar: #F5B83D; --green: #0B6B42; --green-bg: #E6F6EE;
+  --amber-border: color-mix(in srgb, var(--amber-bar) 55%, white);
+
+  --font: Arial, Helvetica, system-ui, sans-serif;
+  --mono: "Courier New", ui-monospace, monospace;
+
+  --capsule-fill: rgba(255, 255, 255, .95); --capsule-blur: 22px;
+  --capsule-radius: 28px; --card-radius: 12px;
+  --shadow: 0 10px 30px rgba(23, 32, 51, .08); --shadow-lean: 0 16px 44px rgba(23, 32, 51, .12);
+  --inset: 24px; --clearance: 120px; --gutter: 64px;
+
+  --t-kicker: 700 11px/16px var(--mono); --t-nav: 700 11px/16px var(--mono);
+  --t-sentence: 400 14px/20px var(--font); --t-action: 700 13px/20px var(--font); --t-because: 400 11px/16px var(--font);
+  --t-title: 700 48px/1.05 var(--font); --t-label: 700 12px/16px var(--mono);
+  --focus: 0 0 0 2px #fff, 0 0 0 4px var(--blue);
+  --ring: 1.5px dotted var(--blue); --ring-offset: 4px;
+  /* 6px stipple dot grid for placeholders */
+  --stipple: radial-gradient(var(--dash) 1px, transparent 1.3px) 0 0 / 6px 6px, var(--surface);
+
+  /* ---- capsule geometry (desktop) ---- */
+  --cue-w: 620px; --cue-orb: 50px; --cue-orb-inset: 11px; --cue-lane: 76px; --cue-pad-r: 20px;
+  --cue-h-rest: 72px; --cue-h-why: 92px; --cue-h-lean: 112px; --cue-h-ask: 72px; --cue-ask-alt: 32px;
+
+  /* ---- motion ---- */
+  --m-morph: 420ms cubic-bezier(.2, .78, .2, 1);
+  --m-morph-ms: 420ms; --m-morph-ease: cubic-bezier(.2, .78, .2, 1);
+  --m-text-out-ms: 140ms; --m-text-in-ms: 220ms; --m-text-in-delay: 160ms;
+  --m-text-in-ease: cubic-bezier(.2, .8, .2, 1);
+  --m-text-blur: 6px; --m-text-shift: 3px;
+  --m-ring-in: 200ms; --m-ring-hold: 2400ms; --m-ring-out: 400ms;
+  --m-shadow: 420ms;
+  --m-fade: 120ms;
+
+  /* ---- prototype chrome (light) ---- */
+  --ch-bg: #eef1f5;
+  --ch-panel: #ffffff;
+  --ch-panel-2: #f6f8fa;
+  --ch-text: #172033;
+  --ch-muted: #526174;
+  --ch-faint: #5f6b78;
+  --ch-line: #d9dfe6;
+  --ch-accent: #075cff;
+  --ch-chip: #e8eefc;
+  --ch-chip-text: #0047cc;
+  --ch-warn: #8a5800;
+  --ch-ok: #0B6B42;
+  --ch-shadow: 0 8px 28px rgba(23, 32, 51, .12);
+  --ch-focus: 0 0 0 2px var(--ch-bg), 0 0 0 4px var(--ch-accent);
+  --ch-dock-h: 48px;
+  --ch-why-w: 340px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ch-bg: #0e1116; --ch-panel: #161b22; --ch-panel-2: #1c232c; --ch-text: #e6ebf2;
+    --ch-muted: #a3afbd; --ch-faint: #8894a2; --ch-line: #2a323d; --ch-accent: #6f9bff;
+    --ch-chip: #1d2a44; --ch-chip-text: #a9c2ff; --ch-warn: #f0b75a; --ch-ok: #5fd39a;
+    --ch-shadow: 0 8px 28px rgba(0, 0, 0, .45);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ch-bg: #0e1116; --ch-panel: #161b22; --ch-panel-2: #1c232c; --ch-text: #e6ebf2;
+  --ch-muted: #a3afbd; --ch-faint: #8894a2; --ch-line: #2a323d; --ch-accent: #6f9bff;
+  --ch-chip: #1d2a44; --ch-chip-text: #a9c2ff; --ch-warn: #f0b75a; --ch-ok: #5fd39a;
+  --ch-shadow: 0 8px 28px rgba(0, 0, 0, .45);
+}
+
+/* Reduced motion. device.js sets html[data-motion="reduce"|"full"] (from the OS, then the
+   dock toggle). Without device.js the OS setting applies through the media query. */
+:root[data-motion="reduce"] {
+  --m-morph: 0ms linear; --m-morph-ms: 0ms;
+  --m-text-out-ms: 0ms; --m-text-in-ms: 120ms; --m-text-in-delay: 0ms; --m-text-blur: 0px; --m-text-shift: 0px;
+  --m-ring-in: 0ms; --m-ring-out: 0ms; --m-shadow: 0ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion]) {
+    --m-morph: 0ms linear; --m-morph-ms: 0ms;
+    --m-text-out-ms: 0ms; --m-text-in-ms: 120ms; --m-text-in-delay: 0ms; --m-text-blur: 0px; --m-text-shift: 0px;
+    --m-ring-in: 0ms; --m-ring-out: 0ms; --m-shadow: 0ms;
+  }
+}
+
+.vh {
+  position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+/* ---- phone values inside a 390 device ---- */
+@container device (max-width: 560px) {
+  .pd-screen, .cue-host {
+    --inset: 12px; --clearance: 108px; --gutter: 16px; --capsule-radius: 26px;
+    --cue-w: 366px; --cue-orb: 44px; --cue-orb-inset: 10px; --cue-lane: 64px; --cue-pad-r: 14px;
+    --cue-h-rest: 80px; --cue-h-why: 104px; --cue-h-lean: 140px; --cue-h-ask: 80px; --cue-ask-alt: 44px;
+    --t-sentence: 400 15px/20px var(--font); --t-action: 700 14px/20px var(--font);
+    --t-title: 700 34px/1.08 var(--font);
+  }
+}

@@ -1,0 +1,5 @@
+# Local-only files: the artifact preview wrapper, screenshots and real-data output
+preview.html
+.shots/
+*.local.json
+*.local.*
