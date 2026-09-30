@@ -1,0 +1,85 @@
+/* device.css: the prototype frame around the product. Chrome uses --ch-* (light/dark);
+   the device is always light. Needs kit-tokens.css. */
+
+html, body { margin: 0; }
+body { background: var(--ch-bg); color: var(--ch-text); font: 14px/1.4 var(--font); overflow-x: hidden; }
+
+.pd { position: relative; min-height: 100dvh; }
+.pd-stage {
+  position: fixed; left: 0; top: 0; right: 0; bottom: var(--ch-dock-h);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+}
+.pd-stage[data-crop="on"] { justify-content: flex-start; padding-top: 8px; }
+.pd-fit { position: relative; flex: none; }
+.pd-device {
+  position: absolute; left: 0; top: 0; transform-origin: 0 0;
+  color-scheme: light; container-type: inline-size; container-name: device;
+  background: var(--paper); color: var(--ink); font: 400 14px/20px var(--font);
+  border-radius: 14px; box-shadow: 0 0 0 1px var(--ch-line), var(--ch-shadow); overflow: hidden;
+}
+.pd-device[data-width="1440"] { width: 1440px; height: 900px; }
+.pd-device[data-width="390"] { width: 390px; height: 844px; border-radius: 28px; }
+.pd-screen { position: absolute; inset: 0; overflow: hidden; background: var(--paper); }
+.pd-page {
+  position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+  box-sizing: border-box; padding: var(--clearance) var(--gutter) 64px; scrollbar-width: thin;
+}
+.pd-page:focus { outline: none; }
+.pd-caption { flex: none; margin: 8px 0 0; font: 400 11px/16px var(--mono); letter-spacing: .06em; color: var(--ch-faint); }
+.pd-stage[data-crop="on"] .pd-caption { display: none; }
+
+/* ---- Why panel: right column on wide screens, a bottom sheet below 1100px ---- */
+.pd-why {
+  position: fixed; top: 0; right: 0; bottom: var(--ch-dock-h); z-index: 45; width: var(--ch-why-w);
+  box-sizing: border-box; overflow: auto; overscroll-behavior: contain;
+  background: var(--ch-panel); color: var(--ch-text); border-left: 1px solid var(--ch-line); box-shadow: var(--ch-shadow);
+  font: 12px/1.45 var(--font);
+}
+.pd-why[hidden] { display: none; }
+@media (min-width: 1100px) { .pd[data-why="on"] .pd-stage { right: var(--ch-why-w); } }
+@media (max-width: 1099px) {
+  .pd-why { left: 0; width: auto; top: auto; height: 46vh; border-left: 0; border-top: 1px solid var(--ch-line); border-radius: 14px 14px 0 0; }
+}
+.pd-why-top { position: sticky; top: 0; display: flex; align-items: baseline; gap: 10px; padding: 12px 12px 10px 16px; background: var(--ch-panel); border-bottom: 1px solid var(--ch-line); }
+.pd-why-top h2 { margin: 0; font: 700 11px/16px var(--mono); letter-spacing: .12em; }
+.pd-why-top span { color: var(--ch-muted); flex: 1 1 auto; min-width: 0; }
+.pd-why-close { width: 28px; height: 28px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--ch-muted); font: 400 16px/1 var(--font); cursor: pointer; }
+.pd-why-close:hover { border-color: var(--ch-line); color: var(--ch-text); }
+.pd-why-list { list-style: none; margin: 0; padding: 4px 0 16px; }
+.pd-why-list li { display: grid; gap: 2px; padding: 10px 16px; border-bottom: 1px solid var(--ch-line); }
+.pd-why-k { font: 700 10px/14px var(--mono); letter-spacing: .08em; color: var(--ch-accent); }
+.pd-why-list li[data-kind="alert"] .pd-why-k, .pd-why-list li[data-kind="refused"] .pd-why-k, .pd-why-list li[data-kind="contract"] .pd-why-k { color: var(--ch-warn); }
+.pd-why-list li[data-kind="held"] .pd-why-k { color: var(--ch-muted); }
+.pd-why-t { color: var(--ch-text); }
+
+/* ---- Dock: a hairline bar along the bottom ---- */
+.pd-dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; height: var(--ch-dock-h); box-sizing: border-box;
+  display: flex; align-items: center; gap: 8px; padding: 0 12px;
+  background: var(--ch-panel); color: var(--ch-text); border-top: 1px solid var(--ch-line);
+  font: 400 11px/1 var(--mono); overflow: hidden;
+}
+.pd-label { flex: none; font-weight: 700; letter-spacing: .14em; color: var(--ch-muted); }
+.pd-title { flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 700 12px/1 var(--font); color: var(--ch-text); }
+.pd-note { flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 400 12px/1 var(--font); color: var(--ch-muted); }
+.pd-spacer { flex: 1 1 0; min-width: 0; }
+.pd-seg { flex: none; display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--ch-line); border-radius: 8px; }
+.pd-dock button {
+  flex: none; min-height: 30px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--ch-line);
+  background: transparent; color: var(--ch-text); font: inherit; white-space: nowrap; cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.pd-seg button { border-color: transparent; min-height: 26px; }
+.pd-dock button:hover { background: var(--ch-panel-2); border-color: var(--ch-faint); }
+.pd-dock button[aria-pressed="true"] { background: var(--ch-chip); color: var(--ch-chip-text); border-color: color-mix(in srgb, var(--ch-accent) 45%, var(--ch-line)); }
+.pd-dock button:focus-visible, .pd-why-close:focus-visible { outline: none; box-shadow: var(--ch-focus); }
+.pd-short { display: none; }
+@media (max-width: 640px) {
+  .pd-note { display: none; }
+  .pd-long { display: none; }
+  .pd-short { display: inline; }
+  .pd-dock { gap: 6px; padding: 0 8px; }
+  .pd-dock button { padding: 0 8px; }
+}
+@media (max-width: 360px) { .pd-title { display: none; } }
