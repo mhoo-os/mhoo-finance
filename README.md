@@ -35,12 +35,18 @@ The investigator preview shows the content-addressed R2 object key, SHA-256 rece
 
 ## Repository setup and status
 
-The canonical repository is `mhoo-os/finance-investigation-workspace`; its default
-branch is `main`. Read [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md) before
-working here. This repository preserves the standalone synthetic prototype.
-Native `@mhoo/finance` belongs to `mhoo-os/mhoo-twenty-next` under accepted
-[ADR-0009](https://github.com/mhoo-os/mhoo/blob/92e43a7b9a59570c76729fb5f8850c66bda6ef78/ADR/0009-finance-six-year-forensic-review.md).
-Neither the project name nor a successful synthetic run authorizes real data.
+The canonical repository is `mhoo-os/mhoo-finance`; its default branch is
+`main`. Read [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md) before working
+here. **This repository is the sole Finance code authority.** The Twenty Finance
+adapter and native `@mhoo/finance` source are retired for Finance; extraction is
+tracked in [MHO-353](https://linear.app/mhoo/issue/MHO-353/make-mhoo-finance-the-sole-finance-code-owner-by-extracting-finance)
+and its custody manifest. This authority decision does not imply that every
+planned extraction PR, deployment, cutover, or archive gate has passed.
+
+Finance remains synthetic-only for now: no real client/provider data,
+credentials, tokens, production identifiers, or provider writes are permitted.
+The target uses plain ESM JavaScript and the Node test runner; future extraction
+PRs must preserve the reviewed custody and rollback boundaries.
 
 Evidence snapshot, checked 2026-09-08 (recheck before acting):
 
